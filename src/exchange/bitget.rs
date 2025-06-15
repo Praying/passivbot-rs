@@ -84,13 +84,19 @@ impl Exchange for Bitget {
 
     async fn load_markets(&self) -> Result<HashMap<String, Market>, SendSyncError> {
         info!("Loading markets from Bitget");
-        let url = format!("{}/api/mix/v1/market/contracts?productType=umcbl", BITGET_API_URL);
+        let url = format!(
+            "{}/api/mix/v1/market/contracts?productType=umcbl",
+            BITGET_API_URL
+        );
         let response = self.client.get(&url).send().await?.text().await?;
         let bitget_response: BitgetResponse<Vec<BitgetMarket>> = serde_json::from_str(&response)?;
 
         if bitget_response.code != "0" {
             error!("Failed to load markets: {}", bitget_response.msg);
-            return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, bitget_response.msg)));
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                bitget_response.msg,
+            )));
         }
 
         let markets = bitget_response
@@ -114,17 +120,22 @@ impl Exchange for Bitget {
     }
 
     async fn fetch_tickers(
-        &self,
-        symbols: &[String],
+        &self, symbols: &[String],
     ) -> Result<HashMap<String, Ticker>, SendSyncError> {
         info!("Fetching tickers from Bitget");
-        let url = format!("{}/api/mix/v1/market/tickers?productType=umcbl", BITGET_API_URL);
+        let url = format!(
+            "{}/api/mix/v1/market/tickers?productType=umcbl",
+            BITGET_API_URL
+        );
         let response = self.client.get(&url).send().await?.text().await?;
         let bitget_response: BitgetResponse<Vec<BitgetTicker>> = serde_json::from_str(&response)?;
 
         if bitget_response.code != "0" {
             error!("Failed to fetch tickers: {}", bitget_response.msg);
-            return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, bitget_response.msg)));
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                bitget_response.msg,
+            )));
         }
 
         let tickers = bitget_response
@@ -155,28 +166,34 @@ impl Exchange for Bitget {
             Ok(ticker.last)
         } else {
             error!("Ticker data not found for symbol: {}", symbol);
-            Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, "Ticker data not found in Bitget response")))
+            Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "Ticker data not found in Bitget response",
+            )))
         }
     }
 
     async fn fetch_order_book(&self, symbol: &str) -> Result<OrderBook, SendSyncError> {
         info!("Fetching order book for symbol: {}", symbol);
-        let url = format!("{}/api/mix/v1/market/depth?symbol={}&limit=100", BITGET_API_URL, symbol);
+        let url = format!(
+            "{}/api/mix/v1/market/depth?symbol={}&limit=100",
+            BITGET_API_URL, symbol
+        );
         let response = self.client.get(&url).send().await?.text().await?;
         let bitget_response: BitgetResponse<serde_json::Value> = serde_json::from_str(&response)?;
 
         if bitget_response.code != "0" {
             error!("Failed to fetch order book: {}", bitget_response.msg);
-            return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, bitget_response.msg)));
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                bitget_response.msg,
+            )));
         }
 
         let asks: Vec<[f64; 2]> = serde_json::from_value(bitget_response.data["asks"].clone())?;
         let bids: Vec<[f64; 2]> = serde_json::from_value(bitget_response.data["bids"].clone())?;
 
-        Ok(OrderBook {
-            bids,
-            asks,
-        })
+        Ok(OrderBook { bids, asks })
     }
 
     async fn fetch_balance(&self) -> Result<f64, SendSyncError> {
@@ -186,7 +203,9 @@ impl Exchange for Bitget {
         let url = format!("{}{}?{}", BITGET_API_URL, request_path, params);
         let (timestamp, signature) = self.sign_request("GET", request_path, "");
 
-        let response = self.client.get(&url)
+        let response = self
+            .client
+            .get(&url)
             .header("ACCESS-KEY", &self.api_key)
             .header("ACCESS-SIGN", &signature)
             .header("ACCESS-TIMESTAMP", &timestamp)
@@ -201,10 +220,16 @@ impl Exchange for Bitget {
 
         if bitget_response.code != "0" {
             error!("Failed to fetch balance: {}", bitget_response.msg);
-            return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, bitget_response.msg)));
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                bitget_response.msg,
+            )));
         }
 
-        let balance: f64 = bitget_response.data["usdtEquity"].as_str().unwrap_or("0").parse()?;
+        let balance: f64 = bitget_response.data["usdtEquity"]
+            .as_str()
+            .unwrap_or("0")
+            .parse()?;
         Ok(balance)
     }
 
@@ -224,7 +249,9 @@ impl Exchange for Bitget {
         let payload = serde_json::to_string(&order_request)?;
         let (timestamp, signature) = self.sign_request("POST", request_path, &payload);
 
-        let response = self.client.post(format!("{}{}", BITGET_API_URL, request_path))
+        let response = self
+            .client
+            .post(format!("{}{}", BITGET_API_URL, request_path))
             .header("ACCESS-KEY", &self.api_key)
             .header("ACCESS-SIGN", &signature)
             .header("ACCESS-TIMESTAMP", &timestamp)
@@ -239,8 +266,14 @@ impl Exchange for Bitget {
         let bitget_response: BitgetResponse<serde_json::Value> = serde_json::from_str(&response)?;
 
         if bitget_response.code != "0" {
-            error!("Failed to place order: {}. Response: {}", bitget_response.msg, response);
-            return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, bitget_response.msg)));
+            error!(
+                "Failed to place order: {}. Response: {}",
+                bitget_response.msg, response
+            );
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                bitget_response.msg,
+            )));
         }
 
         Ok(())
@@ -258,7 +291,9 @@ impl Exchange for Bitget {
         let payload = serde_json::to_string(&order_request)?;
         let (timestamp, signature) = self.sign_request("POST", request_path, &payload);
 
-        let response = self.client.post(format!("{}{}", BITGET_API_URL, request_path))
+        let response = self
+            .client
+            .post(format!("{}{}", BITGET_API_URL, request_path))
             .header("ACCESS-KEY", &self.api_key)
             .header("ACCESS-SIGN", &signature)
             .header("ACCESS-TIMESTAMP", &timestamp)
@@ -273,8 +308,14 @@ impl Exchange for Bitget {
         let bitget_response: BitgetResponse<serde_json::Value> = serde_json::from_str(&response)?;
 
         if bitget_response.code != "0" {
-            error!("Failed to cancel order: {}. Response: {}", bitget_response.msg, response);
-            return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, bitget_response.msg)));
+            error!(
+                "Failed to cancel order: {}. Response: {}",
+                bitget_response.msg, response
+            );
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                bitget_response.msg,
+            )));
         }
 
         Ok(())
@@ -287,7 +328,9 @@ impl Exchange for Bitget {
         let url = format!("{}{}?{}", BITGET_API_URL, request_path, params);
         let (timestamp, signature) = self.sign_request("GET", request_path, "");
 
-        let response = self.client.get(&url)
+        let response = self
+            .client
+            .get(&url)
             .header("ACCESS-KEY", &self.api_key)
             .header("ACCESS-SIGN", &signature)
             .header("ACCESS-TIMESTAMP", &timestamp)
@@ -298,43 +341,66 @@ impl Exchange for Bitget {
             .text()
             .await?;
 
-        let bitget_response: BitgetResponse<Vec<serde_json::Value>> = serde_json::from_str(&response)?;
+        let bitget_response: BitgetResponse<Vec<serde_json::Value>> =
+            serde_json::from_str(&response)?;
 
         if bitget_response.code != "0" {
             error!("Failed to fetch position: {}", bitget_response.msg);
-            return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, bitget_response.msg)));
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                bitget_response.msg,
+            )));
         }
 
         if let Some(position_data) = bitget_response.data.get(0) {
             let size: f64 = position_data["total"].as_str().unwrap_or("0").parse()?;
-            let price: f64 = position_data["averageOpenPrice"].as_str().unwrap_or("0").parse()?;
+            let price: f64 = position_data["averageOpenPrice"]
+                .as_str()
+                .unwrap_or("0")
+                .parse()?;
             Ok(Position { size, price })
         } else {
-            Ok(Position { size: 0.0, price: 0.0 })
+            Ok(Position {
+                size: 0.0,
+                price: 0.0,
+            })
         }
     }
     async fn fetch_exchange_params(&self, symbol: &str) -> Result<ExchangeParams, SendSyncError> {
         info!("Fetching exchange params for symbol: {}", symbol);
-        let url = format!("{}/api/mix/v1/market/contracts?productType=umcbl", BITGET_API_URL);
+        let url = format!(
+            "{}/api/mix/v1/market/contracts?productType=umcbl",
+            BITGET_API_URL
+        );
         let response = self.client.get(&url).send().await?.text().await?;
         let bitget_response: BitgetResponse<Vec<BitgetMarket>> = serde_json::from_str(&response)?;
 
         if bitget_response.code != "0" {
             error!("Failed to fetch exchange params: {}", bitget_response.msg);
-            return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, bitget_response.msg)));
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                bitget_response.msg,
+            )));
         }
 
-        if let Some(market) = bitget_response.data.into_iter().find(|m| m.symbol == symbol) {
+        if let Some(market) = bitget_response
+            .data
+            .into_iter()
+            .find(|m| m.symbol == symbol)
+        {
             Ok(ExchangeParams {
                 qty_step: 0.0, // not available
                 price_step: market.price_end_step.parse()?,
                 min_qty: market.min_trade_amount.parse()?,
-                min_cost: 0.0, // not available
-                c_mult: 1.0,   // not available
+                min_cost: 0.0,  // not available
+                c_mult: 1.0,    // not available
                 inverse: false, // Bitget futures are not inverse
             })
         } else {
-            Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, format!("Could not find market info for {}", symbol))))
+            Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("Could not find market info for {}", symbol),
+            )))
         }
     }
 }

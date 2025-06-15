@@ -46,11 +46,8 @@ impl Individual {
 // --- NSGA-II Algorithm Logic (as free functions) ---
 
 fn evaluate_population(
-    population: &mut [Individual],
-    base_config: &BotConfig,
-    param_keys: &[String],
-    tokio_runtime: &Arc<Runtime>,
-    n_objectives: usize,
+    population: &mut [Individual], base_config: &BotConfig, param_keys: &[String],
+    tokio_runtime: &Arc<Runtime>, n_objectives: usize,
 ) {
     let rt = tokio_runtime.clone();
     population.par_iter_mut().for_each(|ind| {
@@ -86,14 +83,20 @@ fn fast_non_dominated_sort(population: &mut [Individual]) -> Vec<Vec<Individual>
     }
 
     let mut fronts: Vec<Vec<Individual>> = Vec::new();
-    let mut current_front_indices: Vec<usize> = (0..n).filter(|&i| dominance_counts[i] == 0).collect();
-    
+    let mut current_front_indices: Vec<usize> =
+        (0..n).filter(|&i| dominance_counts[i] == 0).collect();
+
     let mut rank = 1;
     while !current_front_indices.is_empty() {
         for &idx in &current_front_indices {
             population[idx].rank = rank;
         }
-        fronts.push(current_front_indices.iter().map(|&i| population[i].clone()).collect());
+        fronts.push(
+            current_front_indices
+                .iter()
+                .map(|&i| population[i].clone())
+                .collect(),
+        );
 
         let mut next_front_indices = Vec::new();
         for &p_idx in &current_front_indices {
@@ -111,15 +114,21 @@ fn fast_non_dominated_sort(population: &mut [Individual]) -> Vec<Vec<Individual>
 }
 
 fn crowding_distance_assignment(front: &mut [Individual], n_objectives: usize) {
-    if front.is_empty() { return; }
+    if front.is_empty() {
+        return;
+    }
     let len = front.len();
     for ind in front.iter_mut() {
         ind.crowding_distance = 0.0;
     }
 
     for i in 0..n_objectives {
-        front.sort_by(|a, b| a.fitness[i].partial_cmp(&b.fitness[i]).unwrap_or(Ordering::Equal));
-        
+        front.sort_by(|a, b| {
+            a.fitness[i]
+                .partial_cmp(&b.fitness[i])
+                .unwrap_or(Ordering::Equal)
+        });
+
         if len > 0 {
             front[0].crowding_distance = f64::INFINITY;
             front[len - 1].crowding_distance = f64::INFINITY;
@@ -132,12 +141,17 @@ fn crowding_distance_assignment(front: &mut [Individual], n_objectives: usize) {
 
             if range.abs() > 1e-9 {
                 for j in 1..(len - 1) {
-                    front[j].crowding_distance += (front[j + 1].fitness[i] - front[j - 1].fitness[i]) / range;
+                    front[j].crowding_distance +=
+                        (front[j + 1].fitness[i] - front[j - 1].fitness[i]) / range;
                 }
             }
         }
     }
-    front.sort_by(|a, b| b.crowding_distance.partial_cmp(&a.crowding_distance).unwrap_or(Ordering::Equal));
+    front.sort_by(|a, b| {
+        b.crowding_distance
+            .partial_cmp(&a.crowding_distance)
+            .unwrap_or(Ordering::Equal)
+    });
 }
 
 fn tournament_selection<'a>(population: &'a [Individual], rng: &mut impl Rng) -> &'a Individual {
@@ -146,21 +160,29 @@ fn tournament_selection<'a>(population: &'a [Individual], rng: &mut impl Rng) ->
     let ind1 = &population[i1];
     let ind2 = &population[i2];
 
-    if ind1.rank < ind2.rank { return ind1; }
-    if ind2.rank < ind1.rank { return ind2; }
-    if ind1.crowding_distance > ind2.crowding_distance { return ind1; }
-    if ind2.crowding_distance > ind1.crowding_distance { return ind2; }
-    
-    if rng.gen() { ind1 } else { ind2 }
+    if ind1.rank < ind2.rank {
+        return ind1;
+    }
+    if ind2.rank < ind1.rank {
+        return ind2;
+    }
+    if ind1.crowding_distance > ind2.crowding_distance {
+        return ind1;
+    }
+    if ind2.crowding_distance > ind1.crowding_distance {
+        return ind2;
+    }
+
+    if rng.gen() {
+        ind1
+    } else {
+        ind2
+    }
 }
 
 fn simulated_binary_crossover(
-    parent1: &Individual,
-    parent2: &Individual,
-    crossover_prob: f64,
-    eta_crossover: f64,
-    bounds: &[(f64, f64)],
-    rng: &mut impl Rng,
+    parent1: &Individual, parent2: &Individual, crossover_prob: f64, eta_crossover: f64,
+    bounds: &[(f64, f64)], rng: &mut impl Rng,
 ) -> (Individual, Individual) {
     let mut child1_vars = parent1.variables.clone();
     let mut child2_vars = parent2.variables.clone();
@@ -187,10 +209,7 @@ fn simulated_binary_crossover(
 }
 
 fn polynomial_mutation(
-    individual: &mut Individual,
-    mutation_prob: f64,
-    eta_mutation: f64,
-    bounds: &[(f64, f64)],
+    individual: &mut Individual, mutation_prob: f64, eta_mutation: f64, bounds: &[(f64, f64)],
     rng: &mut impl Rng,
 ) {
     for i in 0..individual.variables.len() {
@@ -201,7 +220,7 @@ fn polynomial_mutation(
             } else {
                 1.0 - (2.0 * (1.0 - u)).powf(1.0 / (eta_mutation + 1.0))
             };
-            
+
             let val = individual.variables[i];
             let (low, high) = bounds[i];
             individual.variables[i] = (val + delta * (high - low)).clamp(low, high);
@@ -214,9 +233,7 @@ fn calculate_fitness(analysis: &Analysis) -> Vec<f64> {
 }
 
 fn individual_to_config(
-    individual: &Individual,
-    base_config: &BotConfig,
-    param_keys: &[String],
+    individual: &Individual, base_config: &BotConfig, param_keys: &[String],
 ) -> BotConfig {
     let mut config = base_config.clone();
     let mut long_params = HashMap::new();
@@ -239,7 +256,9 @@ fn individual_to_config(
     fn apply_params(side_config: &mut BotSideConfig, params: &HashMap<String, f64>) {
         macro_rules! set_param {
             ($field:ident) => {
-                if let Some(v) = params.get(stringify!($field)) { side_config.$field = *v; }
+                if let Some(v) = params.get(stringify!($field)) {
+                    side_config.$field = *v;
+                }
             };
         }
         set_param!(total_wallet_exposure_limit);
@@ -273,7 +292,6 @@ fn individual_to_config(
     apply_params(&mut config.bot.short, &short_params);
     config
 }
-
 
 // --- Main Optimizer Struct to be called from outside ---
 pub struct Optimizer {
@@ -316,7 +334,8 @@ impl Optimizer {
         // 1. Initialize Population
         let mut population: Vec<Individual> = (0..population_size)
             .map(|_| {
-                let variables = param_bounds.iter()
+                let variables = param_bounds
+                    .iter()
                     .map(|(low, high)| rng.gen_range(*low..=*high))
                     .collect();
                 Individual::new(variables)
@@ -324,8 +343,14 @@ impl Optimizer {
             .collect();
 
         // 2. Evaluate initial population
-        evaluate_population(&mut population, &self.config, &param_keys, &tokio_runtime, n_objectives);
-        
+        evaluate_population(
+            &mut population,
+            &self.config,
+            &param_keys,
+            &tokio_runtime,
+            n_objectives,
+        );
+
         // 3. Main generational loop
         for generation_idx in 0..n_generations {
             info!("Running generation {}...", generation_idx + 1);
@@ -335,12 +360,29 @@ impl Optimizer {
             while offspring.len() < population_size {
                 let parent1 = tournament_selection(&population, &mut rng);
                 let parent2 = tournament_selection(&population, &mut rng);
-                
+
                 let (mut child1, mut child2) = simulated_binary_crossover(
-                    parent1, parent2, crossover_prob, eta_crossover, &param_bounds, &mut rng
+                    parent1,
+                    parent2,
+                    crossover_prob,
+                    eta_crossover,
+                    &param_bounds,
+                    &mut rng,
                 );
-                polynomial_mutation(&mut child1, mutation_prob, eta_mutation, &param_bounds, &mut rng);
-                polynomial_mutation(&mut child2, mutation_prob, eta_mutation, &param_bounds, &mut rng);
+                polynomial_mutation(
+                    &mut child1,
+                    mutation_prob,
+                    eta_mutation,
+                    &param_bounds,
+                    &mut rng,
+                );
+                polynomial_mutation(
+                    &mut child2,
+                    mutation_prob,
+                    eta_mutation,
+                    &param_bounds,
+                    &mut rng,
+                );
 
                 offspring.push(child1);
                 if offspring.len() < population_size {
@@ -349,14 +391,20 @@ impl Optimizer {
             }
 
             // 5. Evaluate offspring
-            evaluate_population(&mut offspring, &self.config, &param_keys, &tokio_runtime, n_objectives);
+            evaluate_population(
+                &mut offspring,
+                &self.config,
+                &param_keys,
+                &tokio_runtime,
+                n_objectives,
+            );
 
             // 6. Combine and select next generation
             let mut combined_pop = population;
             combined_pop.append(&mut offspring);
-            
+
             let mut fronts = fast_non_dominated_sort(&mut combined_pop);
-            
+
             let mut next_pop = Vec::new();
             for front in fronts.iter_mut() {
                 if next_pop.len() + front.len() > population_size {
@@ -370,16 +418,26 @@ impl Optimizer {
             population = next_pop;
 
             if let Some(best_ind) = population.get(0) {
-                 let best_fitness = best_ind.fitness.clone();
-                 info!("Generation {} Best Fitness (Negated Sharpe, Drawdown): {:?}", generation_idx + 1, best_fitness);
+                let best_fitness = best_ind.fitness.clone();
+                info!(
+                    "Generation {} Best Fitness (Negated Sharpe, Drawdown): {:?}",
+                    generation_idx + 1,
+                    best_fitness
+                );
             }
         }
 
         // 7. Get final Pareto front
-        let pareto_front = fast_non_dominated_sort(&mut population).into_iter().next().unwrap_or_default();
+        let pareto_front = fast_non_dominated_sort(&mut population)
+            .into_iter()
+            .next()
+            .unwrap_or_default();
 
         info!("Optimization finished!");
-        info!("Found {} solutions in the Pareto front.", pareto_front.len());
+        info!(
+            "Found {} solutions in the Pareto front.",
+            pareto_front.len()
+        );
 
         for (i, individual) in pareto_front.iter().enumerate() {
             let sharpe = -individual.fitness[0]; // Negate back
@@ -390,7 +448,8 @@ impl Optimizer {
                 sharpe,
                 drawdown * 100.0
             );
-            if i < 5 { // Print top 5 configs
+            if i < 5 {
+                // Print top 5 configs
                 let config = individual_to_config(individual, &self.config, &param_keys);
                 info!("Config for solution {}: {:#?}", i + 1, config.bot);
             }

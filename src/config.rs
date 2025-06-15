@@ -31,6 +31,7 @@ pub fn load_api_keys() -> Result<HashMap<String, UserConfig>, SendSyncError> {
 
 pub fn load_config<P: AsRef<Path>>(path: P) -> Result<BotConfig, SendSyncError> {
     let content = fs::read_to_string(path).map_err(|e| Box::new(e) as SendSyncError)?;
-    let config: BotConfig = serde_hjson::from_str(&content).map_err(|e| Box::new(e) as SendSyncError)?;
+    let config: BotConfig =
+        serde_hjson::from_str(&content).map_err(|e| Box::new(e) as SendSyncError)?;
     Ok(config)
 }

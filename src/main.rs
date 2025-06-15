@@ -1,20 +1,20 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 
-mod types;
-mod config;
-mod grid;
-mod constants;
-mod exchange;
-mod bot;
-mod manager;
-mod backtest;
-mod forager;
-mod data;
-mod optimizer;
-mod downloader;
 pub mod analysis;
+mod backtest;
+mod bot;
+mod config;
+mod constants;
+mod data;
+mod downloader;
+mod exchange;
+mod forager;
+mod grid;
+mod manager;
+mod optimizer;
 pub mod profit_transfer;
+mod types;
 
 use crate::config::{load_api_keys, UserConfig};
 use crate::exchange::{Exchange, SendSyncError};
@@ -46,8 +46,7 @@ enum Commands {
 }
 
 fn init_exchange(
-    live_config: &LiveConfig,
-    user_config: &UserConfig,
+    live_config: &LiveConfig, user_config: &UserConfig,
 ) -> Result<Box<dyn Exchange>, SendSyncError> {
     match user_config.exchange.as_str() {
         "bybit" => Ok(Box::new(exchange::bybit::Bybit::new(
@@ -88,12 +87,14 @@ async fn main() -> Result<(), SendSyncError> {
         Ok(config) => config,
         Err(e) => return Err(e),
     };
-    
+
     let api_keys = load_api_keys()?;
 
     match &cli.command {
         Commands::Live { user } => {
-            let user_config = api_keys.get(user).ok_or("User not found in api-keys.json")?;
+            let user_config = api_keys
+                .get(user)
+                .ok_or("User not found in api-keys.json")?;
             let exchange = init_exchange(&config.live, user_config)?;
             let mut bot = bot::Passivbot::new(config, exchange);
             bot.start().await?;
@@ -115,8 +116,7 @@ async fn main() -> Result<(), SendSyncError> {
                 .get(&args.user)
                 .ok_or("User not found in api-keys.json")?;
             let exchange = init_exchange(&config.live, user_config)?;
-            let mut transferer =
-                profit_transfer::ProfitTransferer::new(exchange, args.clone());
+            let mut transferer = profit_transfer::ProfitTransferer::new(exchange, args.clone());
             transferer.start().await?;
         }
     }

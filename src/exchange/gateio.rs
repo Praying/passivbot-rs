@@ -48,12 +48,17 @@ impl Gateio {
         }
     }
 
-    fn sign_request(&self, method: &str, uri: &str, query_string: &str, body: &str) -> (String, String) {
+    fn sign_request(
+        &self, method: &str, uri: &str, query_string: &str, body: &str,
+    ) -> (String, String) {
         let timestamp = (Utc::now().timestamp_millis() as f64 / 1000.0).to_string();
         let mut hasher = Sha256::new();
         hasher.update(body.as_bytes());
         let hashed_payload = hex::encode(hasher.finalize());
-        let to_sign = format!("{}\n{}\n{}\n{}\n{}", method, uri, query_string, hashed_payload, timestamp);
+        let to_sign = format!(
+            "{}\n{}\n{}\n{}\n{}",
+            method, uri, query_string, hashed_payload, timestamp
+        );
         let signature = {
             type HmacSha512 = Hmac<sha2::Sha512>;
             let mut mac = HmacSha512::new_from_slice(self.api_secret.as_bytes()).unwrap();
@@ -100,8 +105,7 @@ impl Exchange for Gateio {
     }
 
     async fn fetch_tickers(
-        &self,
-        symbols: &[String],
+        &self, symbols: &[String],
     ) -> Result<HashMap<String, Ticker>, SendSyncError> {
         info!("Fetching tickers from Gate.io");
         let url = format!("{}/api/v4/futures/usdt/tickers", GATEIO_API_URL);
@@ -135,23 +139,26 @@ impl Exchange for Gateio {
             Ok(ticker.last)
         } else {
             error!("Ticker data not found for symbol: {}", symbol);
-            Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, "Ticker data not found in Gate.io response")))
+            Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "Ticker data not found in Gate.io response",
+            )))
         }
     }
 
     async fn fetch_order_book(&self, symbol: &str) -> Result<OrderBook, SendSyncError> {
         info!("Fetching order book for symbol: {}", symbol);
-        let url = format!("{}/api/v4/futures/usdt/order_book?contract={}", GATEIO_API_URL, symbol);
+        let url = format!(
+            "{}/api/v4/futures/usdt/order_book?contract={}",
+            GATEIO_API_URL, symbol
+        );
         let response = self.client.get(&url).send().await?.text().await?;
         let order_book_result: serde_json::Value = serde_json::from_str(&response)?;
 
         let asks: Vec<[f64; 2]> = serde_json::from_value(order_book_result["asks"].clone())?;
         let bids: Vec<[f64; 2]> = serde_json::from_value(order_book_result["bids"].clone())?;
 
-        Ok(OrderBook {
-            bids,
-            asks,
-        })
+        Ok(OrderBook { bids, asks })
     }
 
     async fn fetch_balance(&self) -> Result<f64, SendSyncError> {
@@ -159,7 +166,9 @@ impl Exchange for Gateio {
         let uri = "/api/v4/futures/usdt/accounts";
         let (timestamp, signature) = self.sign_request("GET", uri, "", "");
 
-        let response = self.client.get(format!("{}{}", GATEIO_API_URL, uri))
+        let response = self
+            .client
+            .get(format!("{}{}", GATEIO_API_URL, uri))
             .header("KEY", &self.api_key)
             .header("SIGN", &signature)
             .header("Timestamp", &timestamp)
@@ -167,7 +176,7 @@ impl Exchange for Gateio {
             .await?
             .text()
             .await?;
-        
+
         let account: serde_json::Value = serde_json::from_str(&response)?;
         let balance: f64 = account["total"].as_str().unwrap_or("0").parse()?;
         Ok(balance)
@@ -179,14 +188,19 @@ impl Exchange for Gateio {
 
         let mut order_request = std::collections::HashMap::new();
         order_request.insert("contract", order.symbol.clone());
-        order_request.insert("size", (order.qty * if order.side == "buy" { 1.0 } else { -1.0 }).to_string());
+        order_request.insert(
+            "size",
+            (order.qty * if order.side == "buy" { 1.0 } else { -1.0 }).to_string(),
+        );
         order_request.insert("price", order.price.to_string());
         order_request.insert("tif", order.time_in_force.clone());
 
         let payload = serde_json::to_string(&order_request)?;
         let (timestamp, signature) = self.sign_request("POST", uri, "", &payload);
 
-        let response = self.client.post(format!("{}{}", GATEIO_API_URL, uri))
+        let response = self
+            .client
+            .post(format!("{}{}", GATEIO_API_URL, uri))
             .header("KEY", &self.api_key)
             .header("SIGN", &signature)
             .header("Timestamp", &timestamp)
@@ -201,7 +215,10 @@ impl Exchange for Gateio {
 
         if order_response.get("id").is_none() {
             error!("Failed to place order: {}", response);
-            return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, response)));
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                response,
+            )));
         }
 
         Ok(())
@@ -212,7 +229,9 @@ impl Exchange for Gateio {
         let uri = format!("/api/v4/futures/usdt/orders/{}", order_id);
         let (timestamp, signature) = self.sign_request("DELETE", &uri, "", "");
 
-        let response = self.client.delete(format!("{}{}", GATEIO_API_URL, uri))
+        let response = self
+            .client
+            .delete(format!("{}{}", GATEIO_API_URL, uri))
             .header("KEY", &self.api_key)
             .header("SIGN", &signature)
             .header("Timestamp", &timestamp)
@@ -225,7 +244,10 @@ impl Exchange for Gateio {
 
         if order_response.get("id").is_none() {
             error!("Failed to cancel order: {}", response);
-            return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, response)));
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                response,
+            )));
         }
 
         Ok(())
@@ -236,7 +258,9 @@ impl Exchange for Gateio {
         let uri = format!("/api/v4/futures/usdt/positions/{}", symbol);
         let (timestamp, signature) = self.sign_request("GET", &uri, "", "");
 
-        let response = self.client.get(format!("{}{}", GATEIO_API_URL, uri))
+        let response = self
+            .client
+            .get(format!("{}{}", GATEIO_API_URL, uri))
             .header("KEY", &self.api_key)
             .header("SIGN", &signature)
             .header("Timestamp", &timestamp)
@@ -248,24 +272,33 @@ impl Exchange for Gateio {
         let position_response: serde_json::Value = serde_json::from_str(&response)?;
 
         if position_response.get("contract").is_none() {
-            Ok(Position { size: 0.0, price: 0.0 })
+            Ok(Position {
+                size: 0.0,
+                price: 0.0,
+            })
         } else {
             let size: f64 = position_response["size"].as_str().unwrap_or("0").parse()?;
-            let price: f64 = position_response["entry_price"].as_str().unwrap_or("0").parse()?;
+            let price: f64 = position_response["entry_price"]
+                .as_str()
+                .unwrap_or("0")
+                .parse()?;
             Ok(Position { size, price })
         }
     }
     async fn fetch_exchange_params(&self, symbol: &str) -> Result<ExchangeParams, SendSyncError> {
         info!("Fetching exchange params for symbol: {}", symbol);
-        let url = format!("{}/api/v4/futures/usdt/contracts/{}", GATEIO_API_URL, symbol);
+        let url = format!(
+            "{}/api/v4/futures/usdt/contracts/{}",
+            GATEIO_API_URL, symbol
+        );
         let response = self.client.get(&url).send().await?.text().await?;
         let market: GateioMarket = serde_json::from_str(&response)?;
 
         Ok(ExchangeParams {
-            qty_step: 1.0, // not available from api
+            qty_step: 1.0,   // not available from api
             price_step: 0.0, // not available from api
-            min_qty: 1.0, // not available from api
-            min_cost: 0.0, // not available from api
+            min_qty: 1.0,    // not available from api
+            min_cost: 0.0,   // not available from api
             c_mult: market.quanto_multiplier.parse()?,
             inverse: false, // Gate.io USDT futures are linear
         })

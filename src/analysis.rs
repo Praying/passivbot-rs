@@ -49,9 +49,13 @@ fn calculate_sortino_ratio(returns: &[f64]) -> f64 {
         return 0.0;
     }
     let mean = returns.mean();
-    
+
     // Calculate downside deviation
-    let downside_returns: Vec<f64> = returns.iter().filter(|&&r| r < 0.0).map(|&r| r * r).collect();
+    let downside_returns: Vec<f64> = returns
+        .iter()
+        .filter(|&&r| r < 0.0)
+        .map(|&r| r * r)
+        .collect();
     if downside_returns.is_empty() {
         return 0.0; // Or infinity, depending on convention
     }

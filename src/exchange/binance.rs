@@ -54,8 +54,6 @@ struct BinanceBalance {
     balance: String,
 }
 
-
-
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 struct BinancePosition {
@@ -75,7 +73,6 @@ struct BinanceOrderRequest {
     price: String,
     time_in_force: String,
 }
-
 
 pub struct Binance {
     client: reqwest::Client,
@@ -136,8 +133,7 @@ impl Exchange for Binance {
     }
 
     async fn fetch_tickers(
-        &self,
-        symbols: &[String],
+        &self, symbols: &[String],
     ) -> Result<HashMap<String, Ticker>, SendSyncError> {
         info!("Fetching tickers from Binance");
         let url = if symbols.is_empty() {
@@ -189,26 +185,30 @@ impl Exchange for Binance {
             Ok(ticker.last)
         } else {
             error!("Ticker data not found for symbol: {}", symbol);
-            Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, "Ticker data not found in Binance response")))
+            Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "Ticker data not found in Binance response",
+            )))
         }
     }
 
     async fn fetch_order_book(&self, symbol: &str) -> Result<OrderBook, SendSyncError> {
         info!("Fetching order book for symbol: {}", symbol);
-        let url = format!("{}/fapi/v1/depth?symbol={}&limit=100", BINANCE_API_URL, symbol);
+        let url = format!(
+            "{}/fapi/v1/depth?symbol={}&limit=100",
+            BINANCE_API_URL, symbol
+        );
         let response = self.client.get(&url).send().await?.text().await?;
         let order_book_result: BinanceOrderBookResult = serde_json::from_str(&response)?;
 
         let bids = order_book_result
             .bids
             .into_iter()
-            .filter_map(|e| {
-                match (e.0.parse::<f64>(), e.1.parse::<f64>()) {
-                    (Ok(price), Ok(qty)) => Some([price, qty]),
-                    _ => {
-                        warn!("Could not parse order book entry: {:?}", e);
-                        None
-                    }
+            .filter_map(|e| match (e.0.parse::<f64>(), e.1.parse::<f64>()) {
+                (Ok(price), Ok(qty)) => Some([price, qty]),
+                _ => {
+                    warn!("Could not parse order book entry: {:?}", e);
+                    None
                 }
             })
             .collect();
@@ -216,21 +216,16 @@ impl Exchange for Binance {
         let asks = order_book_result
             .asks
             .into_iter()
-            .filter_map(|e| {
-                match (e.0.parse::<f64>(), e.1.parse::<f64>()) {
-                    (Ok(price), Ok(qty)) => Some([price, qty]),
-                    _ => {
-                        warn!("Could not parse order book entry: {:?}", e);
-                        None
-                    }
+            .filter_map(|e| match (e.0.parse::<f64>(), e.1.parse::<f64>()) {
+                (Ok(price), Ok(qty)) => Some([price, qty]),
+                _ => {
+                    warn!("Could not parse order book entry: {:?}", e);
+                    None
                 }
             })
             .collect();
 
-        Ok(OrderBook {
-            bids,
-            asks,
-        })
+        Ok(OrderBook { bids, asks })
     }
 
     async fn fetch_balance(&self) -> Result<f64, SendSyncError> {
@@ -238,7 +233,10 @@ impl Exchange for Binance {
         let timestamp = Utc::now().timestamp_millis();
         let params = format!("timestamp={}", timestamp);
         let signature = self.sign_request(&params);
-        let url = format!("{}/fapi/v2/balance?{}&signature={}", BINANCE_API_URL, params, signature);
+        let url = format!(
+            "{}/fapi/v2/balance?{}&signature={}",
+            BINANCE_API_URL, params, signature
+        );
 
         let response = self
             .client
@@ -274,7 +272,10 @@ impl Exchange for Binance {
         params.push_str(&format!("&timestamp={}", timestamp));
 
         let signature = self.sign_request(&params);
-        let url = format!("{}/fapi/v1/order?{}&signature={}", BINANCE_API_URL, params, signature);
+        let url = format!(
+            "{}/fapi/v1/order?{}&signature={}",
+            BINANCE_API_URL, params, signature
+        );
 
         let response = self
             .client
@@ -287,8 +288,11 @@ impl Exchange for Binance {
 
         // TODO: better error handling
         if response.contains("code") {
-             error!("Failed to place order: {}", response);
-            return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, response)));
+            error!("Failed to place order: {}", response);
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                response,
+            )));
         }
 
         Ok(())
@@ -303,7 +307,10 @@ impl Exchange for Binance {
         params.push_str(&format!("&timestamp={}", timestamp));
 
         let signature = self.sign_request(&params);
-        let url = format!("{}/fapi/v1/order?{}&signature={}", BINANCE_API_URL, params, signature);
+        let url = format!(
+            "{}/fapi/v1/order?{}&signature={}",
+            BINANCE_API_URL, params, signature
+        );
 
         let response = self
             .client
@@ -317,7 +324,10 @@ impl Exchange for Binance {
         // TODO: better error handling
         if response.contains("code") {
             error!("Failed to cancel order: {}", response);
-            return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, response)));
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                response,
+            )));
         }
 
         Ok(())
@@ -328,7 +338,10 @@ impl Exchange for Binance {
         let timestamp = Utc::now().timestamp_millis();
         let params = format!("symbol={}&timestamp={}", symbol, timestamp);
         let signature = self.sign_request(&params);
-        let url = format!("{}/fapi/v2/positionRisk?{}&signature={}", BINANCE_API_URL, params, signature);
+        let url = format!(
+            "{}/fapi/v2/positionRisk?{}&signature={}",
+            BINANCE_API_URL, params, signature
+        );
 
         let response = self
             .client
@@ -359,7 +372,11 @@ impl Exchange for Binance {
         let response = self.client.get(&url).send().await?.text().await?;
         let exchange_info: BinanceExchangeInfo = serde_json::from_str(&response)?;
 
-        if let Some(market) = exchange_info.symbols.into_iter().find(|m| m.symbol == symbol) {
+        if let Some(market) = exchange_info
+            .symbols
+            .into_iter()
+            .find(|m| m.symbol == symbol)
+        {
             let mut qty_step = 0.0;
             let mut price_step = 0.0;
             let mut min_qty = 0.0;
@@ -368,14 +385,30 @@ impl Exchange for Binance {
             for filter in market.filters {
                 match filter.get("filterType").and_then(|v| v.as_str()) {
                     Some("LOT_SIZE") => {
-                        qty_step = filter.get("stepSize").and_then(|v| v.as_str()).unwrap_or("0").parse()?;
-                        min_qty = filter.get("minQty").and_then(|v| v.as_str()).unwrap_or("0").parse()?;
+                        qty_step = filter
+                            .get("stepSize")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("0")
+                            .parse()?;
+                        min_qty = filter
+                            .get("minQty")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("0")
+                            .parse()?;
                     }
                     Some("PRICE_FILTER") => {
-                        price_step = filter.get("tickSize").and_then(|v| v.as_str()).unwrap_or("0").parse()?;
+                        price_step = filter
+                            .get("tickSize")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("0")
+                            .parse()?;
                     }
                     Some("MIN_NOTIONAL") => {
-                        min_cost = filter.get("notional").and_then(|v| v.as_str()).unwrap_or("0").parse()?;
+                        min_cost = filter
+                            .get("notional")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("0")
+                            .parse()?;
                     }
                     _ => {}
                 }
@@ -386,11 +419,14 @@ impl Exchange for Binance {
                 price_step,
                 min_qty,
                 min_cost,
-                c_mult: 1.0, // Not provided by binance
+                c_mult: 1.0,    // Not provided by binance
                 inverse: false, // Binance futures are not inverse
             })
         } else {
-            Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, format!("Could not find market info for {}", symbol))))
+            Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("Could not find market info for {}", symbol),
+            )))
         }
     }
 }

@@ -17,56 +17,60 @@ use super::utils::{
 /// A `Vec<GridOrder>` containing the single trailing close order if conditions are met.
 /// An empty Vec otherwise.
 fn calc_trailing_close_long(
-   exchange_params: &ExchangeParams,
-   state_params: &StateParams,
-   bot_params: &BotSideConfig,
-   position: &Position,
-   trailing_price_bundle: &TrailingPriceBundle,
+    exchange_params: &ExchangeParams, state_params: &StateParams, bot_params: &BotSideConfig,
+    position: &Position, trailing_price_bundle: &TrailingPriceBundle,
 ) -> Vec<GridOrder> {
-   if position.size == 0.0 || bot_params.close_trailing_threshold_pct <= 0.0 {
-       return vec![];
-   }
+    if position.size == 0.0 || bot_params.close_trailing_threshold_pct <= 0.0 {
+        return vec![];
+    }
 
-   let threshold_price = position.price * (1.0 + bot_params.close_trailing_threshold_pct);
-   let retracement_price = trailing_price_bundle.max_since_open * (1.0 - bot_params.close_trailing_retracement_pct);
+    let threshold_price = position.price * (1.0 + bot_params.close_trailing_threshold_pct);
+    let retracement_price =
+        trailing_price_bundle.max_since_open * (1.0 - bot_params.close_trailing_retracement_pct);
 
-   if trailing_price_bundle.max_since_open > threshold_price && state_params.order_book.best_bid() < retracement_price {
-       // Trailing stop triggered
-       let close_qty = position.size * bot_params.close_trailing_qty_pct;
-       let close_price = state_params.order_book.best_bid();
+    if trailing_price_bundle.max_since_open > threshold_price
+        && state_params.order_book.best_bid() < retracement_price
+    {
+        // Trailing stop triggered
+        let close_qty = position.size * bot_params.close_trailing_qty_pct;
+        let close_price = state_params.order_book.best_bid();
 
-       let min_qty = super::entries::calc_min_entry_qty(close_price, exchange_params);
+        let min_qty = super::entries::calc_min_entry_qty(close_price, exchange_params);
 
-       if close_qty >= min_qty {
-           return vec![GridOrder {
-               qty: -close_qty,
-               price: close_price,
-               order_type: OrderType::CloseTrailingLong,
-           }];
-       }
-   }
+        if close_qty >= min_qty {
+            return vec![GridOrder {
+                qty: -close_qty,
+                price: close_price,
+                order_type: OrderType::CloseTrailingLong,
+            }];
+        }
+    }
 
-   vec![]
+    vec![]
 }
 
-
 pub fn calc_closes_long(
-   exchange_params: &ExchangeParams,
-   state_params: &StateParams,
-   bot_params: &BotSideConfig,
-   position: &Position,
-   trailing_price_bundle: &TrailingPriceBundle,
+    exchange_params: &ExchangeParams, state_params: &StateParams, bot_params: &BotSideConfig,
+    position: &Position, trailing_price_bundle: &TrailingPriceBundle,
 ) -> Vec<GridOrder> {
-   // Basic router: if trailing is enabled, use it. Otherwise, use grid.
-   // A more sophisticated router like in entries.rs could be implemented later.
-   if bot_params.close_trailing_threshold_pct > 0.0 && bot_params.close_trailing_retracement_pct > 0.0 {
-       let trailing_closes = calc_trailing_close_long(exchange_params, state_params, bot_params, position, trailing_price_bundle);
-       if !trailing_closes.is_empty() {
-           return trailing_closes;
-       }
-   }
+    // Basic router: if trailing is enabled, use it. Otherwise, use grid.
+    // A more sophisticated router like in entries.rs could be implemented later.
+    if bot_params.close_trailing_threshold_pct > 0.0
+        && bot_params.close_trailing_retracement_pct > 0.0
+    {
+        let trailing_closes = calc_trailing_close_long(
+            exchange_params,
+            state_params,
+            bot_params,
+            position,
+            trailing_price_bundle,
+        );
+        if !trailing_closes.is_empty() {
+            return trailing_closes;
+        }
+    }
 
-   let closes = if bot_params.backwards_tp {
+    let closes = if bot_params.backwards_tp {
         calc_close_grid_backwards_long(
             state_params.balance,
             position.size,
@@ -117,8 +121,8 @@ pub fn calc_closes_long(
     };
     closes
         .iter()
-        .filter_map(|(qty, price, order_type_str)| {
-            match OrderType::from_str(order_type_str) {
+        .filter_map(
+            |(qty, price, order_type_str)| match OrderType::from_str(order_type_str) {
                 Some(order_type) => Some(GridOrder {
                     qty: *qty,
                     price: *price,
@@ -128,8 +132,8 @@ pub fn calc_closes_long(
                     warn!("Unknown order type string: {}", order_type_str);
                     None
                 }
-            }
-        })
+            },
+        )
         .collect()
 }
 
@@ -143,53 +147,58 @@ pub fn calc_closes_long(
 /// A `Vec<GridOrder>` containing the single trailing close order if conditions are met.
 /// An empty Vec otherwise.
 fn calc_trailing_close_short(
-   exchange_params: &ExchangeParams,
-   state_params: &StateParams,
-   bot_params: &BotSideConfig,
-   position: &Position,
-   trailing_price_bundle: &TrailingPriceBundle,
+    exchange_params: &ExchangeParams, state_params: &StateParams, bot_params: &BotSideConfig,
+    position: &Position, trailing_price_bundle: &TrailingPriceBundle,
 ) -> Vec<GridOrder> {
-   if position.size == 0.0 || bot_params.close_trailing_threshold_pct <= 0.0 {
-       return vec![];
-   }
+    if position.size == 0.0 || bot_params.close_trailing_threshold_pct <= 0.0 {
+        return vec![];
+    }
 
-   let threshold_price = position.price * (1.0 - bot_params.close_trailing_threshold_pct);
-   let retracement_price = trailing_price_bundle.min_since_open * (1.0 + bot_params.close_trailing_retracement_pct);
+    let threshold_price = position.price * (1.0 - bot_params.close_trailing_threshold_pct);
+    let retracement_price =
+        trailing_price_bundle.min_since_open * (1.0 + bot_params.close_trailing_retracement_pct);
 
-   if trailing_price_bundle.min_since_open < threshold_price && state_params.order_book.best_ask() > retracement_price {
-       // Trailing stop triggered
-       let close_qty = position.size.abs() * bot_params.close_trailing_qty_pct;
-       let close_price = state_params.order_book.best_ask();
-       
-       let min_qty = super::entries::calc_min_entry_qty(close_price, exchange_params);
+    if trailing_price_bundle.min_since_open < threshold_price
+        && state_params.order_book.best_ask() > retracement_price
+    {
+        // Trailing stop triggered
+        let close_qty = position.size.abs() * bot_params.close_trailing_qty_pct;
+        let close_price = state_params.order_book.best_ask();
 
-       if close_qty >= min_qty {
-           return vec![GridOrder {
-               qty: close_qty,
-               price: close_price,
-               order_type: OrderType::CloseTrailingShort,
-           }];
-       }
-   }
+        let min_qty = super::entries::calc_min_entry_qty(close_price, exchange_params);
 
-   vec![]
+        if close_qty >= min_qty {
+            return vec![GridOrder {
+                qty: close_qty,
+                price: close_price,
+                order_type: OrderType::CloseTrailingShort,
+            }];
+        }
+    }
+
+    vec![]
 }
 
 pub fn calc_closes_short(
-   exchange_params: &ExchangeParams,
-   state_params: &StateParams,
-   bot_params: &BotSideConfig,
-   position: &Position,
-   trailing_price_bundle: &TrailingPriceBundle,
+    exchange_params: &ExchangeParams, state_params: &StateParams, bot_params: &BotSideConfig,
+    position: &Position, trailing_price_bundle: &TrailingPriceBundle,
 ) -> Vec<GridOrder> {
-   if bot_params.close_trailing_threshold_pct > 0.0 && bot_params.close_trailing_retracement_pct > 0.0 {
-       let trailing_closes = calc_trailing_close_short(exchange_params, state_params, bot_params, position, trailing_price_bundle);
-       if !trailing_closes.is_empty() {
-           return trailing_closes;
-       }
-   }
+    if bot_params.close_trailing_threshold_pct > 0.0
+        && bot_params.close_trailing_retracement_pct > 0.0
+    {
+        let trailing_closes = calc_trailing_close_short(
+            exchange_params,
+            state_params,
+            bot_params,
+            position,
+            trailing_price_bundle,
+        );
+        if !trailing_closes.is_empty() {
+            return trailing_closes;
+        }
+    }
 
-   let closes = if bot_params.backwards_tp {
+    let closes = if bot_params.backwards_tp {
         calc_close_grid_backwards_short(
             state_params.balance,
             position.size,
@@ -240,8 +249,8 @@ pub fn calc_closes_short(
     };
     closes
         .iter()
-        .filter_map(|(qty, price, order_type_str)| {
-            match OrderType::from_str(order_type_str) {
+        .filter_map(
+            |(qty, price, order_type_str)| match OrderType::from_str(order_type_str) {
                 Some(order_type) => Some(GridOrder {
                     qty: *qty,
                     price: *price,
@@ -251,8 +260,8 @@ pub fn calc_closes_short(
                     warn!("Unknown order type string: {}", order_type_str);
                     None
                 }
-            }
-        })
+            },
+        )
         .collect()
 }
 #[cfg(test)]
@@ -323,7 +332,7 @@ mod tests {
         assert!((total_qty - position.size).abs() < exchange_params.qty_step);
 
         for i in 0..closes.len() - 1 {
-            assert!(closes[i].price < closes[i+1].price);
+            assert!(closes[i].price < closes[i + 1].price);
         }
     }
 
@@ -347,6 +356,5 @@ mod tests {
 
         let total_qty: f64 = closes.iter().map(|o| o.qty.abs()).sum();
         assert!((total_qty - position.size).abs() < exchange_params.qty_step);
-
     }
 }

@@ -237,7 +237,6 @@ pub struct BacktestParams {
     pub symbols: Vec<String>,
 }
 
-
 #[derive(Debug, Default)]
 pub struct Positions {
     pub long: HashMap<usize, Position>,

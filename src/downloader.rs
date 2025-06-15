@@ -55,7 +55,10 @@ impl Downloader {
                     )
                     .await?
                 }
-                _ => warn!("Exchange '{}' is not supported by the downloader.", exchange_name),
+                _ => warn!(
+                    "Exchange '{}' is not supported by the downloader.",
+                    exchange_name
+                ),
             }
         }
 
@@ -64,21 +67,26 @@ impl Downloader {
     }
 
     async fn download_binance_data(
-        &self,
-        symbols: &Vec<String>,
-        exchange_config: &ExchangeConfig,
-        start_date_str: &str,
+        &self, symbols: &Vec<String>, exchange_config: &ExchangeConfig, start_date_str: &str,
         end_date_str: &str,
     ) -> Result<()> {
         let start_date = NaiveDate::parse_from_str(start_date_str, "%Y-%m-%d")?;
         let end_date = NaiveDate::parse_from_str(end_date_str, "%Y-%m-%d")?;
-        let market_type = if exchange_config.spot { "spot" } else { "futures/um" };
+        let market_type = if exchange_config.spot {
+            "spot"
+        } else {
+            "futures/um"
+        };
 
         for symbol in symbols {
             info!("Downloading Binance data for {}", symbol);
             let dir_path = PathBuf::from(format!(
                 "historical_data/ohlcvs_{}/{}/",
-                if exchange_config.spot { "spot" } else { "futures" },
+                if exchange_config.spot {
+                    "spot"
+                } else {
+                    "futures"
+                },
                 symbol
             ));
             fs::create_dir_all(&dir_path)?;
@@ -150,7 +158,9 @@ impl Downloader {
         let mut csv_data = String::new();
         file_in_zip.read_to_string(&mut csv_data)?;
 
-        let mut rdr = ReaderBuilder::new().has_headers(false).from_reader(csv_data.as_bytes());
+        let mut rdr = ReaderBuilder::new()
+            .has_headers(false)
+            .from_reader(csv_data.as_bytes());
         let mut records = Vec::new();
         for result in rdr.records() {
             let record = result?;
@@ -211,7 +221,10 @@ impl Downloader {
                 if stem.len() == 10 {
                     let month_path = dir_path.join(format!("{}.npy", &stem[0..7]));
                     if month_path.exists() {
-                        info!("Deleting daily file {} as monthly file exists.", path.display());
+                        info!(
+                            "Deleting daily file {} as monthly file exists.",
+                            path.display()
+                        );
                         fs::remove_file(path)?;
                     }
                 }
@@ -221,10 +234,7 @@ impl Downloader {
     }
 
     async fn download_bybit_data(
-        &self,
-        symbols: &Vec<String>,
-        _start_date_str: &str,
-        _end_date_str: &str,
+        &self, symbols: &Vec<String>, _start_date_str: &str, _end_date_str: &str,
     ) -> Result<()> {
         let data_dir = Path::new("data");
         if !data_dir.exists() {
@@ -237,7 +247,10 @@ impl Downloader {
             // to match python version's capabilities (fetching from public.bybit.com,
             // processing trades into ohlcv, etc).
             // For now, we just log a warning.
-            warn!("Bybit downloader is not fully implemented yet. Skipping {}.", symbol);
+            warn!(
+                "Bybit downloader is not fully implemented yet. Skipping {}.",
+                symbol
+            );
         }
         Ok(())
     }

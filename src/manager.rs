@@ -1,4 +1,7 @@
-use crate::types::{BotConfig, StateParams, GridOrder, TrailingPriceBundle, Order, Position, OrderBook, ExchangeParams, EMABands};
+use crate::types::{
+    BotConfig, StateParams, GridOrder, TrailingPriceBundle, Order, Position, OrderBook,
+    ExchangeParams, EMABands,
+};
 use crate::grid::{entries, closes};
 use crate::exchange::{Exchange, SendSyncError};
 use tracing::{info, error};
@@ -8,7 +11,7 @@ pub struct Manager {
     pub symbol: String,
     pub config: BotConfig,
     pub exchange: Box<dyn Exchange>,
-    
+
     // State
     position: Position,
     balance: f64,
@@ -19,11 +22,7 @@ pub struct Manager {
 }
 
 impl Manager {
-    pub fn new(
-        symbol: String,
-        config: BotConfig,
-        exchange: Box<dyn Exchange>,
-    ) -> Self {
+    pub fn new(symbol: String, config: BotConfig, exchange: Box<dyn Exchange>) -> Self {
         Self {
             symbol,
             config,
@@ -56,14 +55,18 @@ impl Manager {
 
     async fn update_state(&mut self) -> Result<(), SendSyncError> {
         info!("[{}] Updating state", self.symbol);
-        
+
         let position_fut = self.exchange.fetch_position(&self.symbol);
         let balance_fut = self.exchange.fetch_balance();
         let order_book_fut = self.exchange.fetch_order_book(&self.symbol);
         let exchange_params_fut = self.exchange.fetch_exchange_params(&self.symbol);
 
-        let (position_res, balance_res, order_book_res, exchange_params_res) = 
-            tokio::join!(position_fut, balance_fut, order_book_fut, exchange_params_fut);
+        let (position_res, balance_res, order_book_res, exchange_params_res) = tokio::join!(
+            position_fut,
+            balance_fut,
+            order_book_fut,
+            exchange_params_fut
+        );
 
         self.position = position_res.map_err(|e| -> SendSyncError {
             error!("[{}] Failed to fetch position: {}", self.symbol, e);
@@ -92,7 +95,7 @@ impl Manager {
 
     async fn execute_logic(&mut self) {
         info!("[{}] Executing logic", self.symbol);
-        
+
         let state_params = StateParams {
             balance: self.balance,
             order_book: self.order_book.clone(),
@@ -104,16 +107,32 @@ impl Manager {
 
         let mut all_orders = Vec::new();
         all_orders.extend(entries::calc_entries_long(
-            &self.exchange_params, &state_params, long_cfg, &self.position, &self.trailing_price_bundle
+            &self.exchange_params,
+            &state_params,
+            long_cfg,
+            &self.position,
+            &self.trailing_price_bundle,
         ));
         all_orders.extend(entries::calc_entries_short(
-            &self.exchange_params, &state_params, short_cfg, &self.position, &self.trailing_price_bundle
+            &self.exchange_params,
+            &state_params,
+            short_cfg,
+            &self.position,
+            &self.trailing_price_bundle,
         ));
         all_orders.extend(closes::calc_closes_long(
-            &self.exchange_params, &state_params, long_cfg, &self.position, &self.trailing_price_bundle
+            &self.exchange_params,
+            &state_params,
+            long_cfg,
+            &self.position,
+            &self.trailing_price_bundle,
         ));
         all_orders.extend(closes::calc_closes_short(
-            &self.exchange_params, &state_params, short_cfg, &self.position, &self.trailing_price_bundle
+            &self.exchange_params,
+            &state_params,
+            short_cfg,
+            &self.position,
+            &self.trailing_price_bundle,
         ));
 
         if let Err(e) = self.place_grid_orders(all_orders).await {
@@ -121,7 +140,9 @@ impl Manager {
         }
     }
 
-    async fn place_grid_orders(&mut self, grid_orders: Vec<GridOrder>) -> Result<(), SendSyncError> {
+    async fn place_grid_orders(
+        &mut self, grid_orders: Vec<GridOrder>,
+    ) -> Result<(), SendSyncError> {
         let price_dist_thresh = self.config.live.price_distance_threshold;
         let mid_price = (self.order_book.best_bid() + self.order_book.best_ask()) / 2.0;
 
@@ -140,19 +161,28 @@ impl Manager {
 
         let batch_size = self.config.live.max_n_creations_per_batch as usize;
         for chunk in orders_to_place.chunks(batch_size) {
-            let orders: Vec<Order> = chunk.iter().map(|grid_order| {
-                Order {
+            let orders: Vec<Order> = chunk
+                .iter()
+                .map(|grid_order| Order {
                     id: "".to_string(),
                     symbol: self.symbol.clone(),
-                    side: if grid_order.qty > 0.0 { "Buy".to_string() } else { "Sell".to_string() },
-                    position_side: if grid_order.qty > 0.0 { "Long".to_string() } else { "Short".to_string() },
+                    side: if grid_order.qty > 0.0 {
+                        "Buy".to_string()
+                    } else {
+                        "Sell".to_string()
+                    },
+                    position_side: if grid_order.qty > 0.0 {
+                        "Long".to_string()
+                    } else {
+                        "Short".to_string()
+                    },
                     qty: grid_order.qty.abs(),
                     price: grid_order.price,
                     reduce_only: false,
                     custom_id: grid_order.order_type.to_string(),
                     time_in_force: self.config.live.time_in_force.clone(),
-                }
-            }).collect();
+                })
+                .collect();
 
             // In a real scenario, we'd use a batch order endpoint if available.
             // For now, we place them sequentially as before.

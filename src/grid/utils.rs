@@ -201,11 +201,7 @@ pub fn qty_to_cost(qty: f64, price: f64, inverse: bool, c_mult: f64) -> f64 {
 ///
 /// The wallet exposure as a decimal (e.g., 0.5 for 50%).
 pub fn calc_wallet_exposure(
-    c_mult: f64,
-    balance: f64,
-    position_size: f64,
-    position_price: f64,
-    inverse: bool,
+    c_mult: f64, balance: f64, position_size: f64, position_price: f64, inverse: bool,
 ) -> f64 {
     if balance <= 0.0 || position_size == 0.0 {
         return 0.0;
@@ -229,12 +225,7 @@ pub fn calc_wallet_exposure(
 ///
 /// The hypothetical wallet exposure after the fill.
 pub fn calc_wallet_exposure_if_filled(
-    balance: f64,
-    psize: f64,
-    pprice: f64,
-    qty: f64,
-    price: f64,
-    inverse: bool,
+    balance: f64, psize: f64, pprice: f64, qty: f64, price: f64, inverse: bool,
     exchange_params: &ExchangeParams,
 ) -> f64 {
     let psize = round_(psize.abs(), exchange_params.qty_step);
@@ -264,11 +255,7 @@ pub fn calc_wallet_exposure_if_filled(
 ///
 /// A tuple containing the new position size and new average price.
 pub fn calc_new_psize_pprice(
-    psize: f64,
-    pprice: f64,
-    qty: f64,
-    price: f64,
-    qty_step: f64,
+    psize: f64, pprice: f64, qty: f64, price: f64, qty_step: f64,
 ) -> (f64, f64) {
     if qty == 0.0 {
         return (psize, pprice);
@@ -339,11 +326,7 @@ pub fn interpolate(x: f64, xs: &[f64], ys: &[f64]) -> f64 {
 ///
 /// The calculated PNL.
 pub fn calc_pnl_long(
-    entry_price: f64,
-    close_price: f64,
-    qty: f64,
-    inverse: bool,
-    c_mult: f64,
+    entry_price: f64, close_price: f64, qty: f64, inverse: bool, c_mult: f64,
 ) -> f64 {
     if inverse {
         if entry_price == 0.0 || close_price == 0.0 {
@@ -370,11 +353,7 @@ pub fn calc_pnl_long(
 ///
 /// The calculated PNL.
 pub fn calc_pnl_short(
-    entry_price: f64,
-    close_price: f64,
-    qty: f64,
-    inverse: bool,
-    c_mult: f64,
+    entry_price: f64, close_price: f64, qty: f64, inverse: bool, c_mult: f64,
 ) -> f64 {
     if inverse {
         if entry_price == 0.0 || close_price == 0.0 {
@@ -434,10 +413,7 @@ pub fn calc_pprice_diff_int(pside: usize, pprice: f64, price: f64) -> f64 {
 ///
 /// The calculated cost allowance for auto-unstuck trades.
 pub fn calc_auto_unstuck_allowance(
-    balance: f64,
-    loss_allowance_pct: f64,
-    pnl_cumsum_max: f64,
-    pnl_cumsum_last: f64,
+    balance: f64, loss_allowance_pct: f64, pnl_cumsum_max: f64, pnl_cumsum_last: f64,
 ) -> f64 {
     // allow up to x% drop from balance peak for auto unstuck
 
@@ -460,10 +436,7 @@ pub fn calc_auto_unstuck_allowance(
 ///
 /// The calculated bid price for an EMA-based entry.
 pub fn calc_ema_price_bid(
-    price_step: f64,
-    order_book_bid: f64,
-    ema_bands_lower: f64,
-    ema_dist: f64,
+    price_step: f64, order_book_bid: f64, ema_bands_lower: f64, ema_dist: f64,
 ) -> f64 {
     f64::min(
         order_book_bid,
@@ -485,10 +458,7 @@ pub fn calc_ema_price_bid(
 ///
 /// The calculated ask price for an EMA-based entry.
 pub fn calc_ema_price_ask(
-    price_step: f64,
-    order_book_ask: f64,
-    ema_bands_upper: f64,
-    ema_dist: f64,
+    price_step: f64, order_book_ask: f64, ema_bands_upper: f64, ema_dist: f64,
 ) -> f64 {
     f64::max(
         order_book_ask,
@@ -527,12 +497,7 @@ pub fn calc_ema(prev_ema: f64, price: f64, span: f64) -> f64 {
 ///
 /// The minimum allowed entry quantity.
 pub fn calc_min_entry_qty(
-    price: f64,
-    inverse: bool,
-    c_mult: f64,
-    qty_step: f64,
-    min_qty: f64,
-    min_cost: f64,
+    price: f64, inverse: bool, c_mult: f64, qty_step: f64, min_qty: f64, min_cost: f64,
 ) -> f64 {
     if inverse {
         min_qty
@@ -561,14 +526,8 @@ pub fn calc_min_entry_qty(
 ///
 /// The total account equity.
 pub fn calc_equity(
-    balance: f64,
-    psize_long: f64,
-    pprice_long: f64,
-    psize_short: f64,
-    pprice_short: f64,
-    last_price: f64,
-    inverse: bool,
-    c_mult: f64,
+    balance: f64, psize_long: f64, pprice_long: f64, psize_short: f64, pprice_short: f64,
+    last_price: f64, inverse: bool, c_mult: f64,
 ) -> f64 {
     let mut equity = balance;
     if pprice_long != 0.0 && psize_long != 0.0 {
@@ -600,15 +559,8 @@ pub fn calc_equity(
 ///
 /// The calculated quantity for the initial entry order.
 pub fn calc_initial_entry_qty(
-    balance: f64,
-    initial_entry_price: f64,
-    inverse: bool,
-    qty_step: f64,
-    min_qty: f64,
-    min_cost: f64,
-    c_mult: f64,
-    wallet_exposure_limit: f64,
-    initial_qty_pct: f64,
+    balance: f64, initial_entry_price: f64, inverse: bool, qty_step: f64, min_qty: f64,
+    min_cost: f64, c_mult: f64, wallet_exposure_limit: f64, initial_qty_pct: f64,
 ) -> f64 {
     f64::max(
         calc_min_entry_qty(
@@ -651,13 +603,8 @@ pub fn calc_initial_entry_qty(
 /// The calculated entry quantity to reach the target exposure. Returns 0.0 if the
 /// current exposure is already near or above the target.
 pub fn find_entry_qty_bringing_wallet_exposure_to_target(
-    balance: f64,
-    psize: f64,
-    pprice: f64,
-    wallet_exposure_target: f64,
-    entry_price: f64,
-    inverse: bool,
-    exchange_params: &ExchangeParams,
+    balance: f64, psize: f64, pprice: f64, wallet_exposure_target: f64, entry_price: f64,
+    inverse: bool, exchange_params: &ExchangeParams,
 ) -> f64 {
     if wallet_exposure_target == 0.0 {
         return 0.0;
@@ -766,23 +713,13 @@ pub fn find_entry_qty_bringing_wallet_exposure_to_target(
 /// The calculated close quantity. Returns 0.0 if exposure is already below the target,
 /// or the full position size if the target is 0.
 pub fn find_close_qty_long_bringing_wallet_exposure_to_target(
-    balance: f64,
-    psize: f64,
-    pprice: f64,
-    wallet_exposure_target: f64,
-    close_price: f64,
-    inverse: bool,
-    exchange_params: &ExchangeParams,
+    balance: f64, psize: f64, pprice: f64, wallet_exposure_target: f64, close_price: f64,
+    inverse: bool, exchange_params: &ExchangeParams,
 ) -> f64 {
     let eval = |guess: f64| {
         let pnl = calc_pnl_long(pprice, close_price, guess, inverse, exchange_params.c_mult);
         let new_balance = balance + pnl;
-        qty_to_cost(
-            psize - guess,
-            pprice,
-            inverse,
-            exchange_params.c_mult,
-        ) / new_balance
+        qty_to_cost(psize - guess, pprice, inverse, exchange_params.c_mult) / new_balance
     };
 
     if wallet_exposure_target == 0.0 {
@@ -798,10 +735,14 @@ pub fn find_close_qty_long_bringing_wallet_exposure_to_target(
     let mut vals = Vec::new();
     let mut evals = Vec::new();
 
-    guesses.push(round_(
-        psize * (1.0 - wallet_exposure_target / wallet_exposure),
-        exchange_params.qty_step,
-    ).max(0.0).min(psize));
+    guesses.push(
+        round_(
+            psize * (1.0 - wallet_exposure_target / wallet_exposure),
+            exchange_params.qty_step,
+        )
+        .max(0.0)
+        .min(psize),
+    );
     vals.push(eval(guesses[0]));
     evals.push((vals[0] - wallet_exposure_target).abs() / wallet_exposure_target);
 
@@ -814,7 +755,12 @@ pub fn find_close_qty_long_bringing_wallet_exposure_to_target(
     evals.push((vals[1] - wallet_exposure_target).abs() / wallet_exposure_target);
 
     for _ in 0..15 {
-        let egv: Vec<_> = evals.iter().zip(guesses.iter()).zip(vals.iter()).map(|((e,g),v)| (*e,*g,*v)).collect();
+        let egv: Vec<_> = evals
+            .iter()
+            .zip(guesses.iter())
+            .zip(vals.iter())
+            .map(|((e, g), v)| (*e, *g, *v))
+            .collect();
         let mut sorted_egv = egv;
         sorted_egv.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(Ordering::Equal));
 
@@ -823,19 +769,23 @@ pub fn find_close_qty_long_bringing_wallet_exposure_to_target(
             &[sorted_egv[0].2, sorted_egv[1].2],
             &[sorted_egv[0].1, sorted_egv[1].1],
         );
-        
-        let mut new_guess = round_(new_guess, exchange_params.qty_step).max(0.0).min(psize);
+
+        let mut new_guess = round_(new_guess, exchange_params.qty_step)
+            .max(0.0)
+            .min(psize);
 
         if guesses.contains(&new_guess) {
             new_guess = (new_guess - exchange_params.qty_step).max(0.0).min(psize);
             if guesses.contains(&new_guess) {
-                 new_guess = (new_guess + 2.0 * exchange_params.qty_step).max(0.0).min(psize);
-                 if guesses.contains(&new_guess) {
+                new_guess = (new_guess + 2.0 * exchange_params.qty_step)
+                    .max(0.0)
+                    .min(psize);
+                if guesses.contains(&new_guess) {
                     break;
-                 }
+                }
             }
         }
-        
+
         guesses.push(new_guess);
         vals.push(eval(new_guess));
         evals.push((vals.last().unwrap() - wallet_exposure_target).abs() / wallet_exposure_target);
@@ -870,23 +820,13 @@ pub fn find_close_qty_long_bringing_wallet_exposure_to_target(
 /// The calculated close quantity (as a positive value). Returns 0.0 if exposure is
 /// already below the target, or the full position size if the target is 0.
 pub fn find_close_qty_short_bringing_wallet_exposure_to_target(
-    balance: f64,
-    psize: f64,
-    pprice: f64,
-    wallet_exposure_target: f64,
-    close_price: f64,
-    inverse: bool,
-    exchange_params: &ExchangeParams,
+    balance: f64, psize: f64, pprice: f64, wallet_exposure_target: f64, close_price: f64,
+    inverse: bool, exchange_params: &ExchangeParams,
 ) -> f64 {
     let eval = |guess: f64| {
         let pnl = calc_pnl_short(pprice, close_price, guess, inverse, exchange_params.c_mult);
         let new_balance = balance + pnl;
-        qty_to_cost(
-            psize.abs() - guess,
-            pprice,
-            inverse,
-            exchange_params.c_mult,
-        ) / new_balance
+        qty_to_cost(psize.abs() - guess, pprice, inverse, exchange_params.c_mult) / new_balance
     };
 
     if wallet_exposure_target == 0.0 {
@@ -901,13 +841,17 @@ pub fn find_close_qty_short_bringing_wallet_exposure_to_target(
     let mut guesses = Vec::new();
     let mut vals = Vec::new();
     let mut evals = Vec::new();
-    
+
     let abs_psize = psize.abs();
 
-    guesses.push(round_(
-        abs_psize * (1.0 - wallet_exposure_target / wallet_exposure),
-        exchange_params.qty_step,
-    ).max(0.0).min(abs_psize));
+    guesses.push(
+        round_(
+            abs_psize * (1.0 - wallet_exposure_target / wallet_exposure),
+            exchange_params.qty_step,
+        )
+        .max(0.0)
+        .min(abs_psize),
+    );
     vals.push(eval(guesses[0]));
     evals.push((vals[0] - wallet_exposure_target).abs() / wallet_exposure_target);
 
@@ -920,7 +864,12 @@ pub fn find_close_qty_short_bringing_wallet_exposure_to_target(
     evals.push((vals[1] - wallet_exposure_target).abs() / wallet_exposure_target);
 
     for _ in 0..15 {
-        let egv: Vec<_> = evals.iter().zip(guesses.iter()).zip(vals.iter()).map(|((e,g),v)| (*e,*g,*v)).collect();
+        let egv: Vec<_> = evals
+            .iter()
+            .zip(guesses.iter())
+            .zip(vals.iter())
+            .map(|((e, g), v)| (*e, *g, *v))
+            .collect();
         let mut sorted_egv = egv;
         sorted_egv.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(Ordering::Equal));
 
@@ -929,19 +878,25 @@ pub fn find_close_qty_short_bringing_wallet_exposure_to_target(
             &[sorted_egv[0].2, sorted_egv[1].2],
             &[sorted_egv[0].1, sorted_egv[1].1],
         );
-        
-        let mut new_guess = round_(new_guess, exchange_params.qty_step).max(0.0).min(abs_psize);
+
+        let mut new_guess = round_(new_guess, exchange_params.qty_step)
+            .max(0.0)
+            .min(abs_psize);
 
         if guesses.contains(&new_guess) {
-            new_guess = (new_guess - exchange_params.qty_step).max(0.0).min(abs_psize);
+            new_guess = (new_guess - exchange_params.qty_step)
+                .max(0.0)
+                .min(abs_psize);
             if guesses.contains(&new_guess) {
-                 new_guess = (new_guess + 2.0 * exchange_params.qty_step).max(0.0).min(abs_psize);
-                 if guesses.contains(&new_guess) {
+                new_guess = (new_guess + 2.0 * exchange_params.qty_step)
+                    .max(0.0)
+                    .min(abs_psize);
+                if guesses.contains(&new_guess) {
                     break;
-                 }
+                }
             }
         }
-        
+
         guesses.push(new_guess);
         vals.push(eval(new_guess));
         evals.push((vals.last().unwrap() - wallet_exposure_target).abs() / wallet_exposure_target);
@@ -974,13 +929,8 @@ pub fn find_close_qty_short_bringing_wallet_exposure_to_target(
 ///
 /// The calculated bankruptcy price. Returns 0.0 if calculation is not possible.
 pub fn calc_bankruptcy_price(
-    balance: f64,
-    psize_long: f64,
-    pprice_long: f64,
-    psize_short: f64,
-    pprice_short: f64,
-    inverse: bool,
-    c_mult: f64,
+    balance: f64, psize_long: f64, pprice_long: f64, psize_short: f64, pprice_short: f64,
+    inverse: bool, c_mult: f64,
 ) -> f64 {
     let pprice_long = nan_to_0(pprice_long);
     let pprice_short = nan_to_0(pprice_short);
@@ -988,8 +938,16 @@ pub fn calc_bankruptcy_price(
     let abs_psize_short = psize_short.abs() * c_mult;
 
     let bankruptcy_price = if inverse {
-        let short_cost = if pprice_short > 0.0 { abs_psize_short / pprice_short } else { 0.0 };
-        let long_cost = if pprice_long > 0.0 { psize_long / pprice_long } else { 0.0 };
+        let short_cost = if pprice_short > 0.0 {
+            abs_psize_short / pprice_short
+        } else {
+            0.0
+        };
+        let long_cost = if pprice_long > 0.0 {
+            psize_long / pprice_long
+        } else {
+            0.0
+        };
         let denominator = short_cost - long_cost - balance;
         if denominator == 0.0 {
             0.0
@@ -1027,26 +985,15 @@ pub fn calc_bankruptcy_price(
 ///
 /// The calculated order quantity for the clock mode.
 pub fn calc_clock_qty(
-    balance: f64,
-    wallet_exposure: f64,
-    entry_price: f64,
-    inverse: bool,
-    qty_step: f64,
-    min_qty: f64,
-    min_cost: f64,
-    c_mult: f64,
-    qty_pct: f64,
-    we_multiplier: f64,
+    balance: f64, wallet_exposure: f64, entry_price: f64, inverse: bool, qty_step: f64,
+    min_qty: f64, min_cost: f64, c_mult: f64, qty_pct: f64, we_multiplier: f64,
     wallet_exposure_limit: f64,
 ) -> f64 {
     let ratio = wallet_exposure / wallet_exposure_limit;
     let cost = balance * wallet_exposure_limit * qty_pct * (1.0 + ratio * we_multiplier);
     f64::max(
         calc_min_entry_qty(entry_price, inverse, c_mult, qty_step, min_qty, min_cost),
-        round_(
-            cost_to_qty(cost, entry_price, inverse, c_mult),
-            qty_step,
-        ),
+        round_(cost_to_qty(cost, entry_price, inverse, c_mult), qty_step),
     )
 }
 
@@ -1061,25 +1008,11 @@ pub fn calc_clock_qty(
 /// `quantity` is negative for a close order.
 /// Returns `(0.0, 0.0, ...)` if no unstuck order is needed.
 pub fn calc_auto_unstuck_close_long(
-    balance: f64,
-    psize: f64,
-    pprice: f64,
-    lowest_ask: f64,
-    ema_band_upper: f64,
-    utc_now_ms: f64,
-    prev_au_fill_ts_close: f64,
-    inverse: bool,
-    qty_step: f64,
-    price_step: f64,
-    min_qty: f64,
-    min_cost: f64,
-    c_mult: f64,
-    wallet_exposure_limit: f64,
-    auto_unstuck_wallet_exposure_threshold: f64,
-    auto_unstuck_ema_dist: f64,
-    auto_unstuck_delay_minutes: f64,
-    auto_unstuck_qty_pct: f64,
-    lowest_normal_close_price: f64,
+    balance: f64, psize: f64, pprice: f64, lowest_ask: f64, ema_band_upper: f64, utc_now_ms: f64,
+    prev_au_fill_ts_close: f64, inverse: bool, qty_step: f64, price_step: f64, min_qty: f64,
+    min_cost: f64, c_mult: f64, wallet_exposure_limit: f64,
+    auto_unstuck_wallet_exposure_threshold: f64, auto_unstuck_ema_dist: f64,
+    auto_unstuck_delay_minutes: f64, auto_unstuck_qty_pct: f64, lowest_normal_close_price: f64,
 ) -> (f64, f64, &'static str) {
     let threshold = wallet_exposure_limit * (1.0 - auto_unstuck_wallet_exposure_threshold);
     let wallet_exposure = qty_to_cost(psize, pprice, inverse, c_mult) / balance;
@@ -1135,10 +1068,20 @@ pub fn calc_auto_unstuck_close_long(
             }
         }
         if unstuck_close_qty != 0.0 {
-            let min_entry_qty =
-                calc_min_entry_qty(unstuck_close_price, inverse, c_mult, qty_step, min_qty, min_cost);
+            let min_entry_qty = calc_min_entry_qty(
+                unstuck_close_price,
+                inverse,
+                c_mult,
+                qty_step,
+                min_qty,
+                min_cost,
+            );
             unstuck_close_qty = unstuck_close_qty.max(min_entry_qty);
-            return (-unstuck_close_qty, unstuck_close_price, "unstuck_close_long");
+            return (
+                -unstuck_close_qty,
+                unstuck_close_price,
+                "unstuck_close_long",
+            );
         }
     }
     (0.0, 0.0, "unstuck_close_long")
@@ -1159,10 +1102,7 @@ pub fn calc_auto_unstuck_close_long(
 /// The calculated delay in milliseconds, with a minimum of 60,000ms (1 minute).
 #[inline]
 pub fn calc_delay_between_fills_ms_ask(
-    pprice: f64,
-    price: f64,
-    delay_between_fills_ms: f64,
-    delay_weight: f64,
+    pprice: f64, price: f64, delay_between_fills_ms: f64, delay_weight: f64,
 ) -> f64 {
     let pprice_diff = if pprice > 0.0 {
         price / pprice - 1.0
@@ -1177,11 +1117,7 @@ pub fn calc_delay_between_fills_ms_ask(
 
 /// Generates a series of raw, unrounded close prices for a grid.
 fn generate_raw_close_prices(
-    pprice: f64,
-    min_markup: f64,
-    markup_range: f64,
-    n_close_orders: i32,
-    side: usize,
+    pprice: f64, min_markup: f64, markup_range: f64, n_close_orders: i32, side: usize,
 ) -> Vec<f64> {
     let minm = if side == LONG {
         pprice * (1.0 + min_markup)
@@ -1191,7 +1127,8 @@ fn generate_raw_close_prices(
 
     (0..n_close_orders)
         .map(|i| {
-            let price_offset = (pprice * markup_range / (n_close_orders as f64 - 1.0).max(1.0)) * i as f64;
+            let price_offset =
+                (pprice * markup_range / (n_close_orders as f64 - 1.0).max(1.0)) * i as f64;
             if side == LONG {
                 minm + price_offset
             } else {
@@ -1210,27 +1147,11 @@ fn generate_raw_close_prices(
 /// A `Vec` of tuples, where each tuple represents a close order: `(quantity, price, label)`.
 /// Quantity is negative for close orders.
 pub fn calc_close_grid_frontwards_long(
-    balance: f64,
-    psize: f64,
-    pprice: f64,
-    lowest_ask: f64,
-    ema_band_upper: f64,
-    utc_now_ms: f64,
-    prev_au_fill_ts_close: f64,
-    inverse: bool,
-    qty_step: f64,
-    price_step: f64,
-    min_qty: f64,
-    min_cost: f64,
-    c_mult: f64,
-    wallet_exposure_limit: f64,
-    min_markup: f64,
-    markup_range: f64,
-    n_close_orders: f64,
-    auto_unstuck_wallet_exposure_threshold: f64,
-    auto_unstuck_ema_dist: f64,
-    auto_unstuck_delay_minutes: f64,
-    auto_unstuck_qty_pct: f64,
+    balance: f64, psize: f64, pprice: f64, lowest_ask: f64, ema_band_upper: f64, utc_now_ms: f64,
+    prev_au_fill_ts_close: f64, inverse: bool, qty_step: f64, price_step: f64, min_qty: f64,
+    min_cost: f64, c_mult: f64, wallet_exposure_limit: f64, min_markup: f64, markup_range: f64,
+    n_close_orders: f64, auto_unstuck_wallet_exposure_threshold: f64, auto_unstuck_ema_dist: f64,
+    auto_unstuck_delay_minutes: f64, auto_unstuck_qty_pct: f64,
 ) -> Vec<(f64, f64, &'static str)> {
     let mut psize_ = round_dn(psize, qty_step);
     if psize_ == 0.0 {
@@ -1277,24 +1198,42 @@ pub fn calc_close_grid_frontwards_long(
         );
         if auto_unstuck_close.0 != 0.0 {
             psize_ = round_(psize_ - auto_unstuck_close.0.abs(), qty_step);
-            let min_entry_qty = calc_min_entry_qty(auto_unstuck_close.1, inverse, c_mult, qty_step, min_qty, min_cost);
+            let min_entry_qty = calc_min_entry_qty(
+                auto_unstuck_close.1,
+                inverse,
+                c_mult,
+                qty_step,
+                min_qty,
+                min_cost,
+            );
             if psize_ < min_entry_qty {
                 return vec![(-psize, auto_unstuck_close.1, "unstuck_close_long")];
             }
             closes.push(auto_unstuck_close);
         }
     }
-    
+
     if close_prices.len() == 1 {
-        let min_entry_qty = calc_min_entry_qty(close_prices[0], inverse, c_mult, qty_step, min_qty, min_cost);
+        let min_entry_qty = calc_min_entry_qty(
+            close_prices[0],
+            inverse,
+            c_mult,
+            qty_step,
+            min_qty,
+            min_cost,
+        );
         if psize_ >= min_entry_qty {
             closes.push((-psize_, close_prices[0], "long_nclose"));
         }
-        return if closes.is_empty() { vec![(0.0, 0.0, "")] } else { closes };
+        return if closes.is_empty() {
+            vec![(0.0, 0.0, "")]
+        } else {
+            closes
+        };
     }
 
     let default_close_qty = round_dn(psize_ / close_prices.len() as f64, qty_step);
-    for &price in &close_prices[..close_prices.len()-1] {
+    for &price in &close_prices[..close_prices.len() - 1] {
         let min_close_qty = calc_min_entry_qty(price, inverse, c_mult, qty_step, min_qty, min_cost);
         if psize_ < min_close_qty {
             break;
@@ -1303,21 +1242,34 @@ pub fn calc_close_grid_frontwards_long(
         closes.push((-close_qty, price, "long_nclose"));
         psize_ = round_(psize_ - close_qty, qty_step);
     }
-    
+
     let last_price = if let Some(price) = close_prices.last() {
         *price
     } else {
         // This case should be handled by the is_empty check above, but for safety:
-        return if closes.is_empty() { vec![(0.0, 0.0, "")] } else { closes };
+        return if closes.is_empty() {
+            vec![(0.0, 0.0, "")]
+        } else {
+            closes
+        };
     };
-    let min_close_qty = calc_min_entry_qty(last_price, inverse, c_mult, qty_step, min_qty, min_cost);
+    let min_close_qty =
+        calc_min_entry_qty(last_price, inverse, c_mult, qty_step, min_qty, min_cost);
     if psize_ >= min_close_qty {
         closes.push((-psize_, last_price, "long_nclose"));
     } else if let Some(last_close) = closes.last_mut() {
-        *last_close = (-round_(last_close.0.abs() + psize_, qty_step), last_close.1, last_close.2);
+        *last_close = (
+            -round_(last_close.0.abs() + psize_, qty_step),
+            last_close.1,
+            last_close.2,
+        );
     }
 
-    if closes.is_empty() { vec![(0.0, 0.0, "")] } else { closes }
+    if closes.is_empty() {
+        vec![(0.0, 0.0, "")]
+    } else {
+        closes
+    }
 }
 
 /// Calculates a grid of close orders for a long position using the "backwards" distribution method.
@@ -1330,27 +1282,11 @@ pub fn calc_close_grid_frontwards_long(
 /// A `Vec` of tuples, where each tuple represents a close order: `(quantity, price, label)`.
 /// Quantity is negative for close orders.
 pub fn calc_close_grid_backwards_long(
-    balance: f64,
-    psize: f64,
-    pprice: f64,
-    lowest_ask: f64,
-    ema_band_upper: f64,
-    utc_now_ms: f64,
-    prev_au_fill_ts_close: f64,
-    inverse: bool,
-    qty_step: f64,
-    price_step: f64,
-    min_qty: f64,
-    min_cost: f64,
-    c_mult: f64,
-    wallet_exposure_limit: f64,
-    min_markup: f64,
-    markup_range: f64,
-    n_close_orders: f64,
-    auto_unstuck_wallet_exposure_threshold: f64,
-    auto_unstuck_ema_dist: f64,
-    auto_unstuck_delay_minutes: f64,
-    auto_unstuck_qty_pct: f64,
+    balance: f64, psize: f64, pprice: f64, lowest_ask: f64, ema_band_upper: f64, utc_now_ms: f64,
+    prev_au_fill_ts_close: f64, inverse: bool, qty_step: f64, price_step: f64, min_qty: f64,
+    min_cost: f64, c_mult: f64, wallet_exposure_limit: f64, min_markup: f64, markup_range: f64,
+    n_close_orders: f64, auto_unstuck_wallet_exposure_threshold: f64, auto_unstuck_ema_dist: f64,
+    auto_unstuck_delay_minutes: f64, auto_unstuck_qty_pct: f64,
 ) -> Vec<(f64, f64, &'static str)> {
     let mut psize_ = round_dn(psize, qty_step);
     if psize_ == 0.0 {
@@ -1407,7 +1343,14 @@ pub fn calc_close_grid_backwards_long(
         );
         if auto_unstuck_close.0 != 0.0 {
             psize_ = round_(psize_ - auto_unstuck_close.0.abs(), qty_step);
-            let min_entry_qty = calc_min_entry_qty(auto_unstuck_close.1, inverse, c_mult, qty_step, min_qty, min_cost);
+            let min_entry_qty = calc_min_entry_qty(
+                auto_unstuck_close.1,
+                inverse,
+                c_mult,
+                qty_step,
+                min_qty,
+                min_cost,
+            );
             if psize_ < min_entry_qty {
                 return vec![(-psize, auto_unstuck_close.1, "unstuck_close_long")];
             }
@@ -1416,13 +1359,24 @@ pub fn calc_close_grid_backwards_long(
     }
 
     if close_prices.len() == 1 {
-        let min_entry_qty = calc_min_entry_qty(close_prices[0], inverse, c_mult, qty_step, min_qty, min_cost);
+        let min_entry_qty = calc_min_entry_qty(
+            close_prices[0],
+            inverse,
+            c_mult,
+            qty_step,
+            min_qty,
+            min_cost,
+        );
         if psize_ >= min_entry_qty {
             closes.push((-psize_, close_prices[0], "long_nclose"));
         }
-        return if closes.is_empty() { vec![(0.0, 0.0, "")] } else { closes };
+        return if closes.is_empty() {
+            vec![(0.0, 0.0, "")]
+        } else {
+            closes
+        };
     }
-    
+
     let qty_per_close = (full_psize / close_prices_all.len() as f64).max(min_qty);
     let qty_per_close = round_up(qty_per_close, qty_step);
 
@@ -1431,9 +1385,13 @@ pub fn calc_close_grid_backwards_long(
         let qty = psize_.min(qty_per_close.max(min_entry_qty));
         if qty < min_entry_qty {
             if let Some(last_close) = closes.last_mut() {
-                *last_close = (-round_(last_close.0.abs() + psize_, qty_step), last_close.1, last_close.2);
+                *last_close = (
+                    -round_(last_close.0.abs() + psize_, qty_step),
+                    last_close.1,
+                    last_close.2,
+                );
             } else {
-                 closes.push((-psize_, price, "long_nclose"));
+                closes.push((-psize_, price, "long_nclose"));
             }
             psize_ = 0.0;
             break;
@@ -1444,15 +1402,23 @@ pub fn calc_close_grid_backwards_long(
             break;
         }
     }
-    
+
     if psize_ > 0.0 {
         if let Some(last_close) = closes.last_mut() {
-            *last_close = (-round_(last_close.0.abs() + psize_, qty_step), last_close.1, last_close.2);
+            *last_close = (
+                -round_(last_close.0.abs() + psize_, qty_step),
+                last_close.1,
+                last_close.2,
+            );
         }
     }
-    
+
     closes.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(Ordering::Equal));
-    if closes.is_empty() { vec![(0.0, 0.0, "")] } else { closes }
+    if closes.is_empty() {
+        vec![(0.0, 0.0, "")]
+    } else {
+        closes
+    }
 }
 
 /// Determines if an "auto unstuck" close order should be placed for a short position, and calculates it.
@@ -1466,25 +1432,11 @@ pub fn calc_close_grid_backwards_long(
 /// `quantity` is positive for a close order.
 /// Returns `(0.0, 0.0, ...)` if no unstuck order is needed.
 pub fn calc_auto_unstuck_close_short(
-    balance: f64,
-    psize: f64,
-    pprice: f64,
-    highest_bid: f64,
-    ema_band_lower: f64,
-    utc_now_ms: f64,
-    prev_au_fill_ts_close: f64,
-    inverse: bool,
-    qty_step: f64,
-    price_step: f64,
-    min_qty: f64,
-    min_cost: f64,
-    c_mult: f64,
-    wallet_exposure_limit: f64,
-    auto_unstuck_wallet_exposure_threshold: f64,
-    auto_unstuck_ema_dist: f64,
-    auto_unstuck_delay_minutes: f64,
-    auto_unstuck_qty_pct: f64,
-    highest_normal_close_price: f64,
+    balance: f64, psize: f64, pprice: f64, highest_bid: f64, ema_band_lower: f64, utc_now_ms: f64,
+    prev_au_fill_ts_close: f64, inverse: bool, qty_step: f64, price_step: f64, min_qty: f64,
+    min_cost: f64, c_mult: f64, wallet_exposure_limit: f64,
+    auto_unstuck_wallet_exposure_threshold: f64, auto_unstuck_ema_dist: f64,
+    auto_unstuck_delay_minutes: f64, auto_unstuck_qty_pct: f64, highest_normal_close_price: f64,
 ) -> (f64, f64, &'static str) {
     let threshold = wallet_exposure_limit * (1.0 - auto_unstuck_wallet_exposure_threshold);
     let wallet_exposure = qty_to_cost(psize, pprice, inverse, c_mult) / balance;
@@ -1539,10 +1491,20 @@ pub fn calc_auto_unstuck_close_short(
             }
         }
         if unstuck_close_qty != 0.0 {
-            let min_entry_qty =
-                calc_min_entry_qty(unstuck_close_price, inverse, c_mult, qty_step, min_qty, min_cost);
+            let min_entry_qty = calc_min_entry_qty(
+                unstuck_close_price,
+                inverse,
+                c_mult,
+                qty_step,
+                min_qty,
+                min_cost,
+            );
             unstuck_close_qty = unstuck_close_qty.max(min_entry_qty);
-            return (unstuck_close_qty, unstuck_close_price, "unstuck_close_short");
+            return (
+                unstuck_close_qty,
+                unstuck_close_price,
+                "unstuck_close_short",
+            );
         }
     }
     (0.0, 0.0, "unstuck_close_short")
@@ -1563,10 +1525,7 @@ pub fn calc_auto_unstuck_close_short(
 /// The calculated delay in milliseconds, with a minimum of 60,000ms (1 minute).
 #[inline]
 pub fn calc_delay_between_fills_ms_bid(
-    pprice: f64,
-    price: f64,
-    delay_between_fills_ms: f64,
-    delay_weight: f64,
+    pprice: f64, price: f64, delay_between_fills_ms: f64, delay_weight: f64,
 ) -> f64 {
     let pprice_diff = if pprice > 0.0 {
         1.0 - price / pprice
@@ -1588,27 +1547,11 @@ pub fn calc_delay_between_fills_ms_bid(
 /// A `Vec` of tuples, where each tuple represents a close order: `(quantity, price, label)`.
 /// Quantity is positive for close orders.
 pub fn calc_close_grid_frontwards_short(
-    balance: f64,
-    psize: f64,
-    pprice: f64,
-    highest_bid: f64,
-    ema_band_lower: f64,
-    utc_now_ms: f64,
-    prev_au_fill_ts_close: f64,
-    inverse: bool,
-    qty_step: f64,
-    price_step: f64,
-    min_qty: f64,
-    min_cost: f64,
-    c_mult: f64,
-    wallet_exposure_limit: f64,
-    min_markup: f64,
-    markup_range: f64,
-    n_close_orders: f64,
-    auto_unstuck_wallet_exposure_threshold: f64,
-    auto_unstuck_ema_dist: f64,
-    auto_unstuck_delay_minutes: f64,
-    auto_unstuck_qty_pct: f64,
+    balance: f64, psize: f64, pprice: f64, highest_bid: f64, ema_band_lower: f64, utc_now_ms: f64,
+    prev_au_fill_ts_close: f64, inverse: bool, qty_step: f64, price_step: f64, min_qty: f64,
+    min_cost: f64, c_mult: f64, wallet_exposure_limit: f64, min_markup: f64, markup_range: f64,
+    n_close_orders: f64, auto_unstuck_wallet_exposure_threshold: f64, auto_unstuck_ema_dist: f64,
+    auto_unstuck_delay_minutes: f64, auto_unstuck_qty_pct: f64,
 ) -> Vec<(f64, f64, &'static str)> {
     let mut psize_ = round_dn(psize.abs(), qty_step);
     if psize_ == 0.0 {
@@ -1656,24 +1599,42 @@ pub fn calc_close_grid_frontwards_short(
         );
         if auto_unstuck_close.0 != 0.0 {
             psize_ = round_(psize_ - auto_unstuck_close.0.abs(), qty_step);
-            let min_entry_qty = calc_min_entry_qty(auto_unstuck_close.1, inverse, c_mult, qty_step, min_qty, min_cost);
+            let min_entry_qty = calc_min_entry_qty(
+                auto_unstuck_close.1,
+                inverse,
+                c_mult,
+                qty_step,
+                min_qty,
+                min_cost,
+            );
             if psize_ < min_entry_qty {
                 return vec![(psize.abs(), auto_unstuck_close.1, "unstuck_close_short")];
             }
             closes.push(auto_unstuck_close);
         }
     }
-    
+
     if close_prices.len() == 1 {
-        let min_entry_qty = calc_min_entry_qty(close_prices[0], inverse, c_mult, qty_step, min_qty, min_cost);
+        let min_entry_qty = calc_min_entry_qty(
+            close_prices[0],
+            inverse,
+            c_mult,
+            qty_step,
+            min_qty,
+            min_cost,
+        );
         if psize_ >= min_entry_qty {
             closes.push((psize_, close_prices[0], "short_nclose"));
         }
-        return if closes.is_empty() { vec![(0.0, 0.0, "")] } else { closes };
+        return if closes.is_empty() {
+            vec![(0.0, 0.0, "")]
+        } else {
+            closes
+        };
     }
 
     let default_close_qty = round_dn(psize_ / close_prices.len() as f64, qty_step);
-    for &price in &close_prices[..close_prices.len()-1] {
+    for &price in &close_prices[..close_prices.len() - 1] {
         let min_close_qty = calc_min_entry_qty(price, inverse, c_mult, qty_step, min_qty, min_cost);
         if psize_ < min_close_qty {
             break;
@@ -1682,21 +1643,34 @@ pub fn calc_close_grid_frontwards_short(
         closes.push((close_qty, price, "short_nclose"));
         psize_ = round_(psize_ - close_qty, qty_step);
     }
-    
+
     let last_price = if let Some(price) = close_prices.last() {
         *price
     } else {
         // This case should be handled by the is_empty check above, but for safety:
-        return if closes.is_empty() { vec![(0.0, 0.0, "")] } else { closes };
+        return if closes.is_empty() {
+            vec![(0.0, 0.0, "")]
+        } else {
+            closes
+        };
     };
-    let min_close_qty = calc_min_entry_qty(last_price, inverse, c_mult, qty_step, min_qty, min_cost);
+    let min_close_qty =
+        calc_min_entry_qty(last_price, inverse, c_mult, qty_step, min_qty, min_cost);
     if psize_ >= min_close_qty {
         closes.push((psize_, last_price, "short_nclose"));
     } else if let Some(last_close) = closes.last_mut() {
-        *last_close = (round_(last_close.0.abs() + psize_, qty_step), last_close.1, last_close.2);
+        *last_close = (
+            round_(last_close.0.abs() + psize_, qty_step),
+            last_close.1,
+            last_close.2,
+        );
     }
 
-    if closes.is_empty() { vec![(0.0, 0.0, "")] } else { closes }
+    if closes.is_empty() {
+        vec![(0.0, 0.0, "")]
+    } else {
+        closes
+    }
 }
 
 /// Calculates a grid of close orders for a short position using the "backwards" distribution method.
@@ -1709,27 +1683,11 @@ pub fn calc_close_grid_frontwards_short(
 /// A `Vec` of tuples, where each tuple represents a close order: `(quantity, price, label)`.
 /// Quantity is positive for close orders.
 pub fn calc_close_grid_backwards_short(
-    balance: f64,
-    psize: f64,
-    pprice: f64,
-    highest_bid: f64,
-    ema_band_lower: f64,
-    utc_now_ms: f64,
-    prev_au_fill_ts_close: f64,
-    inverse: bool,
-    qty_step: f64,
-    price_step: f64,
-    min_qty: f64,
-    min_cost: f64,
-    c_mult: f64,
-    wallet_exposure_limit: f64,
-    min_markup: f64,
-    markup_range: f64,
-    n_close_orders: f64,
-    auto_unstuck_wallet_exposure_threshold: f64,
-    auto_unstuck_ema_dist: f64,
-    auto_unstuck_delay_minutes: f64,
-    auto_unstuck_qty_pct: f64,
+    balance: f64, psize: f64, pprice: f64, highest_bid: f64, ema_band_lower: f64, utc_now_ms: f64,
+    prev_au_fill_ts_close: f64, inverse: bool, qty_step: f64, price_step: f64, min_qty: f64,
+    min_cost: f64, c_mult: f64, wallet_exposure_limit: f64, min_markup: f64, markup_range: f64,
+    n_close_orders: f64, auto_unstuck_wallet_exposure_threshold: f64, auto_unstuck_ema_dist: f64,
+    auto_unstuck_delay_minutes: f64, auto_unstuck_qty_pct: f64,
 ) -> Vec<(f64, f64, &'static str)> {
     let mut psize_ = round_dn(psize.abs(), qty_step);
     if psize_ == 0.0 {
@@ -1786,7 +1744,14 @@ pub fn calc_close_grid_backwards_short(
         );
         if auto_unstuck_close.0 != 0.0 {
             psize_ = round_(psize_ - auto_unstuck_close.0.abs(), qty_step);
-            let min_entry_qty = calc_min_entry_qty(auto_unstuck_close.1, inverse, c_mult, qty_step, min_qty, min_cost);
+            let min_entry_qty = calc_min_entry_qty(
+                auto_unstuck_close.1,
+                inverse,
+                c_mult,
+                qty_step,
+                min_qty,
+                min_cost,
+            );
             if psize_ < min_entry_qty {
                 return vec![(psize.abs(), auto_unstuck_close.1, "unstuck_close_short")];
             }
@@ -1795,13 +1760,24 @@ pub fn calc_close_grid_backwards_short(
     }
 
     if close_prices.len() == 1 {
-        let min_entry_qty = calc_min_entry_qty(close_prices[0], inverse, c_mult, qty_step, min_qty, min_cost);
+        let min_entry_qty = calc_min_entry_qty(
+            close_prices[0],
+            inverse,
+            c_mult,
+            qty_step,
+            min_qty,
+            min_cost,
+        );
         if psize_ >= min_entry_qty {
             closes.push((psize_, close_prices[0], "short_nclose"));
         }
-        return if closes.is_empty() { vec![(0.0, 0.0, "")] } else { closes };
+        return if closes.is_empty() {
+            vec![(0.0, 0.0, "")]
+        } else {
+            closes
+        };
     }
-    
+
     let qty_per_close = (full_psize / close_prices_all.len() as f64).max(min_qty);
     let qty_per_close = round_up(qty_per_close, qty_step);
 
@@ -1810,9 +1786,13 @@ pub fn calc_close_grid_backwards_short(
         let qty = psize_.min(qty_per_close.max(min_entry_qty));
         if qty < min_entry_qty {
             if let Some(last_close) = closes.last_mut() {
-                *last_close = (round_(last_close.0.abs() + psize_, qty_step), last_close.1, last_close.2);
+                *last_close = (
+                    round_(last_close.0.abs() + psize_, qty_step),
+                    last_close.1,
+                    last_close.2,
+                );
             } else {
-                 closes.push((psize_, price, "short_nclose"));
+                closes.push((psize_, price, "short_nclose"));
             }
             psize_ = 0.0;
             break;
@@ -1823,15 +1803,23 @@ pub fn calc_close_grid_backwards_short(
             break;
         }
     }
-    
+
     if psize_ > 0.0 {
         if let Some(last_close) = closes.last_mut() {
-            *last_close = (round_(last_close.0.abs() + psize_, qty_step), last_close.1, last_close.2);
+            *last_close = (
+                round_(last_close.0.abs() + psize_, qty_step),
+                last_close.1,
+                last_close.2,
+            );
         }
     }
-    
+
     closes.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(Ordering::Equal));
-    if closes.is_empty() { vec![(0.0, 0.0, "")] } else { closes }
+    if closes.is_empty() {
+        vec![(0.0, 0.0, "")]
+    } else {
+        closes
+    }
 }
 #[cfg(test)]
 mod tests {
@@ -1871,58 +1859,58 @@ fn test_calc_diff() {
     assert_eq!(calc_diff(1.0, 0.0), f64::INFINITY);
 }
 
-    #[test]
-    fn test_cost_to_qty() {
-        // Linear
-        assert_eq!(cost_to_qty(100.0, 50.0, false, 1.0), 2.0);
-        assert_eq!(cost_to_qty(100.0, 0.0, false, 1.0), 0.0);
-
-        // Inverse
-        assert_eq!(cost_to_qty(2.0, 50.0, true, 1.0), 100.0);
-        assert_eq!(cost_to_qty(100.0, 50.0, true, 2.0), 2500.0);
-    }
-
-    #[test]
-    fn test_qty_to_cost() {
-        // Linear
-        assert_eq!(qty_to_cost(2.0, 50.0, false, 1.0), 100.0);
-        assert_eq!(qty_to_cost(-2.0, 50.0, false, 1.0), 100.0);
-
-        // Inverse
-        assert_eq!(qty_to_cost(100.0, 50.0, true, 1.0), 2.0);
-        assert_eq!(qty_to_cost(100.0, 0.0, true, 1.0), 0.0);
-        assert_eq!(qty_to_cost(2500.0, 50.0, true, 2.0), 100.0);
-    }
 #[test]
-    fn test_calc_pnl_long() {
-        let epsilon = 1e-9;
-        // Linear
-        assert!((calc_pnl_long(100.0, 110.0, 1.0, false, 1.0) - 10.0).abs() < epsilon);
-        // Inverse
-        assert!((calc_pnl_long(100.0, 110.0, 11000.0, true, 1.0) - 10.0).abs() < epsilon);
-    }
+fn test_cost_to_qty() {
+    // Linear
+    assert_eq!(cost_to_qty(100.0, 50.0, false, 1.0), 2.0);
+    assert_eq!(cost_to_qty(100.0, 0.0, false, 1.0), 0.0);
 
-    #[test]
-    fn test_calc_pnl_short() {
-        let epsilon = 1e-9;
-        // Linear
-        assert!((calc_pnl_short(100.0, 90.0, 1.0, false, 1.0) - 10.0).abs() < epsilon);
-        // Inverse
-        assert!((calc_pnl_short(100.0, 90.0, 9000.0, true, 1.0) - 10.0).abs() < epsilon);
-    }
+    // Inverse
+    assert_eq!(cost_to_qty(2.0, 50.0, true, 1.0), 100.0);
+    assert_eq!(cost_to_qty(100.0, 50.0, true, 2.0), 2500.0);
+}
 
-    #[test]
-    fn test_calc_new_psize_pprice() {
-        let epsilon = 1e-9;
-        let (psize, pprice) = calc_new_psize_pprice(1.0, 100.0, 1.0, 110.0, 0.01);
-        assert!((psize - 2.0).abs() < epsilon);
-        assert!((pprice - 105.0).abs() < epsilon);
+#[test]
+fn test_qty_to_cost() {
+    // Linear
+    assert_eq!(qty_to_cost(2.0, 50.0, false, 1.0), 100.0);
+    assert_eq!(qty_to_cost(-2.0, 50.0, false, 1.0), 100.0);
 
-        let (psize, pprice) = calc_new_psize_pprice(0.0, 0.0, 1.0, 110.0, 0.01);
-        assert!((psize - 1.0).abs() < epsilon);
-        assert!((pprice - 110.0).abs() < epsilon);
+    // Inverse
+    assert_eq!(qty_to_cost(100.0, 50.0, true, 1.0), 2.0);
+    assert_eq!(qty_to_cost(100.0, 0.0, true, 1.0), 0.0);
+    assert_eq!(qty_to_cost(2500.0, 50.0, true, 2.0), 100.0);
+}
+#[test]
+fn test_calc_pnl_long() {
+    let epsilon = 1e-9;
+    // Linear
+    assert!((calc_pnl_long(100.0, 110.0, 1.0, false, 1.0) - 10.0).abs() < epsilon);
+    // Inverse
+    assert!((calc_pnl_long(100.0, 110.0, 11000.0, true, 1.0) - 10.0).abs() < epsilon);
+}
 
-        let (psize, pprice) = calc_new_psize_pprice(1.0, 100.0, -1.0, 110.0, 0.01);
-        assert!((psize - 0.0).abs() < epsilon);
-        assert!((pprice - 0.0).abs() < epsilon);
-    }
+#[test]
+fn test_calc_pnl_short() {
+    let epsilon = 1e-9;
+    // Linear
+    assert!((calc_pnl_short(100.0, 90.0, 1.0, false, 1.0) - 10.0).abs() < epsilon);
+    // Inverse
+    assert!((calc_pnl_short(100.0, 90.0, 9000.0, true, 1.0) - 10.0).abs() < epsilon);
+}
+
+#[test]
+fn test_calc_new_psize_pprice() {
+    let epsilon = 1e-9;
+    let (psize, pprice) = calc_new_psize_pprice(1.0, 100.0, 1.0, 110.0, 0.01);
+    assert!((psize - 2.0).abs() < epsilon);
+    assert!((pprice - 105.0).abs() < epsilon);
+
+    let (psize, pprice) = calc_new_psize_pprice(0.0, 0.0, 1.0, 110.0, 0.01);
+    assert!((psize - 1.0).abs() < epsilon);
+    assert!((pprice - 110.0).abs() < epsilon);
+
+    let (psize, pprice) = calc_new_psize_pprice(1.0, 100.0, -1.0, 110.0, 0.01);
+    assert!((psize - 0.0).abs() < epsilon);
+    assert!((pprice - 0.0).abs() < epsilon);
+}

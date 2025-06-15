@@ -1,6 +1,6 @@
-pub mod bybit;
 pub mod binance;
 pub mod bitget;
+pub mod bybit;
 pub mod gateio;
 pub mod hyperliquid;
 pub mod okx;
@@ -16,7 +16,9 @@ pub type SendSyncError = Box<dyn std::error::Error + Send + Sync>;
 pub trait Exchange: Send + Sync {
     fn clone_box(&self) -> Box<dyn Exchange>;
     async fn load_markets(&self) -> Result<HashMap<String, Market>, SendSyncError>;
-    async fn fetch_tickers(&self, symbols: &[String]) -> Result<HashMap<String, Ticker>, SendSyncError>;
+    async fn fetch_tickers(
+        &self, symbols: &[String],
+    ) -> Result<HashMap<String, Ticker>, SendSyncError>;
     async fn fetch_ticker(&self, symbol: &str) -> Result<f64, SendSyncError>;
     async fn fetch_order_book(&self, symbol: &str) -> Result<OrderBook, SendSyncError>;
     async fn fetch_balance(&self) -> Result<f64, SendSyncError>;

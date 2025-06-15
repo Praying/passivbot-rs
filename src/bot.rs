@@ -13,10 +13,7 @@ pub struct Passivbot {
 
 impl Passivbot {
     pub fn new(config: BotConfig, exchange: Box<dyn Exchange>) -> Self {
-        Passivbot {
-            config,
-            exchange,
-        }
+        Passivbot { config, exchange }
     }
 
     pub async fn start(&mut self) -> Result<(), SendSyncError> {
@@ -27,7 +24,7 @@ impl Passivbot {
 
     pub async fn run(&mut self) -> Result<(), SendSyncError> {
         info!("Bot is running...");
-        
+
         let manager = Manager::new("".into(), self.config.clone(), self.exchange.clone_box());
         let forager = Forager::new(manager.clone()).await;
 
@@ -39,7 +36,11 @@ impl Passivbot {
             // Start managers for new symbols
             for symbol in &symbols_to_trade {
                 if !handles.contains_key(symbol) {
-                    let mut manager = Manager::new(symbol.clone(), self.config.clone(), self.exchange.clone_box());
+                    let mut manager = Manager::new(
+                        symbol.clone(),
+                        self.config.clone(),
+                        self.exchange.clone_box(),
+                    );
                     let handle = task::spawn(async move {
                         manager.run().await;
                     });
@@ -59,7 +60,7 @@ impl Passivbot {
                     handle.abort();
                 }
             }
-            
+
             tokio::time::sleep(tokio::time::Duration::from_secs(60)).await;
         }
     }

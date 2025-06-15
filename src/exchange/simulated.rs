@@ -34,7 +34,9 @@ impl Exchange for SimulatedExchange {
         unimplemented!()
     }
 
-    async fn fetch_tickers(&self, _symbols: &[String]) -> Result<HashMap<String, Ticker>, SendSyncError> {
+    async fn fetch_tickers(
+        &self, _symbols: &[String],
+    ) -> Result<HashMap<String, Ticker>, SendSyncError> {
         unimplemented!()
     }
 
@@ -59,12 +61,17 @@ impl Exchange for SimulatedExchange {
             new_order.id = self.orders.len().to_string();
             self.orders.push(new_order);
 
-            let qty = if order.side == "Buy" { order.qty } else { -order.qty };
+            let qty = if order.side == "Buy" {
+                order.qty
+            } else {
+                -order.qty
+            };
             let new_size = self.position.size + qty;
             if new_size == 0.0 {
                 self.position.price = 0.0;
             } else {
-                self.position.price = (self.position.size * self.position.price + qty * order.price) / new_size;
+                self.position.price =
+                    (self.position.size * self.position.price + qty * order.price) / new_size;
             }
             self.position.size = new_size;
         }

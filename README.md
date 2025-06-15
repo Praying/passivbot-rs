@@ -1,8 +1,8 @@
 # passivbot-rs
 
-[![Crates.io](https://img.shields.io/crates/v/passivbot-rs.svg)](https://crates.io/crates/passivbot-rs)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![CI](https://github.com/Praying/passivbot-rs/actions/workflows/rust.yml/badge.svg)](https://github.com/Praying/passivbot-rs/actions/workflows/rust.yml)
+
 A high-performance cryptocurrency quantitative trading bot written in Rust.
 
 ## Core Features

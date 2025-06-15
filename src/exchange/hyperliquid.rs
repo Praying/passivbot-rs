@@ -59,7 +59,14 @@ impl Exchange for Hyperliquid {
         info!("Loading markets from Hyperliquid");
         let url = format!("{}/info", HYPERLIQUID_API_URL);
         let body = serde_json::json!({ "type": "meta" });
-        let response = self.client.post(&url).json(&body).send().await?.text().await?;
+        let response = self
+            .client
+            .post(&url)
+            .json(&body)
+            .send()
+            .await?
+            .text()
+            .await?;
         let markets_response: HyperliquidUniverse = serde_json::from_str(&response)?;
 
         let markets = markets_response
@@ -83,13 +90,19 @@ impl Exchange for Hyperliquid {
     }
 
     async fn fetch_tickers(
-        &self,
-        symbols: &[String],
+        &self, symbols: &[String],
     ) -> Result<HashMap<String, Ticker>, SendSyncError> {
         info!("Fetching tickers from Hyperliquid");
         let url = format!("{}/info", HYPERLIQUID_API_URL);
         let body = serde_json::json!({ "type": "allMids" });
-        let response = self.client.post(&url).json(&body).send().await?.text().await?;
+        let response = self
+            .client
+            .post(&url)
+            .json(&body)
+            .send()
+            .await?
+            .text()
+            .await?;
         let tickers: HashMap<String, String> = serde_json::from_str(&response)?;
 
         let tickers = tickers
@@ -120,15 +133,26 @@ impl Exchange for Hyperliquid {
             Ok(ticker.last)
         } else {
             error!("Ticker data not found for symbol: {}", symbol);
-            Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, "Ticker data not found in Hyperliquid response")))
+            Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "Ticker data not found in Hyperliquid response",
+            )))
         }
     }
 
     async fn fetch_order_book(&self, symbol: &str) -> Result<OrderBook, SendSyncError> {
         info!("Fetching order book for symbol: {}", symbol);
         let url = format!("{}/info", HYPERLIQUID_API_URL);
-        let body = serde_json::json!({ "type": "l2Book", "coin": symbol.replace("/USDC:USDC", "") });
-        let response = self.client.post(&url).json(&body).send().await?.text().await?;
+        let body =
+            serde_json::json!({ "type": "l2Book", "coin": symbol.replace("/USDC:USDC", "") });
+        let response = self
+            .client
+            .post(&url)
+            .json(&body)
+            .send()
+            .await?
+            .text()
+            .await?;
         let order_book_result: serde_json::Value = serde_json::from_str(&response)?;
 
         let mut bids: Vec<[f64; 2]> = Vec::new();
@@ -153,27 +177,36 @@ impl Exchange for Hyperliquid {
                 }
             }
         }
-        
-        Ok(OrderBook {
-            bids,
-            asks,
-        })
+
+        Ok(OrderBook { bids, asks })
     }
 
     async fn fetch_balance(&self) -> Result<f64, SendSyncError> {
         info!("Fetching balance from Hyperliquid");
         let url = format!("{}/info", HYPERLIQUID_API_URL);
         let body = serde_json::json!({ "type": "clearinghouseState", "user": self.wallet_address });
-        let response = self.client.post(&url).json(&body).send().await?.text().await?;
+        let response = self
+            .client
+            .post(&url)
+            .json(&body)
+            .send()
+            .await?
+            .text()
+            .await?;
         let balance_response: serde_json::Value = serde_json::from_str(&response)?;
 
         let margin_summary = &balance_response["marginSummary"];
-        let account_value: f64 = margin_summary["accountValue"].as_str().unwrap_or("0").parse()?;
-        
+        let account_value: f64 = margin_summary["accountValue"]
+            .as_str()
+            .unwrap_or("0")
+            .parse()?;
+
         let mut unrealized_pnl = 0.0;
         if let Some(asset_positions) = balance_response["assetPositions"].as_array() {
             for position in asset_positions {
-                let pnl_str = position["position"]["unrealizedPnl"].as_str().unwrap_or("0");
+                let pnl_str = position["position"]["unrealizedPnl"]
+                    .as_str()
+                    .unwrap_or("0");
                 unrealized_pnl += pnl_str.parse::<f64>().unwrap_or(0.0);
             }
         }
@@ -199,8 +232,10 @@ impl Exchange for Hyperliquid {
         });
 
         let payload = self.sign_exchange_request(action)?;
-        
-        let response = self.client.post(format!("{}/exchange", HYPERLIQUID_API_URL))
+
+        let response = self
+            .client
+            .post(format!("{}/exchange", HYPERLIQUID_API_URL))
             .header("Content-Type", "application/json")
             .body(payload)
             .send()
@@ -213,7 +248,10 @@ impl Exchange for Hyperliquid {
             Ok(())
         } else {
             error!("Failed to place order: {}", response);
-            Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, response)))
+            Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                response,
+            )))
         }
     }
 
@@ -232,7 +270,9 @@ impl Exchange for Hyperliquid {
 
         let payload = self.sign_exchange_request(action)?;
 
-        let response = self.client.post(format!("{}/exchange", HYPERLIQUID_API_URL))
+        let response = self
+            .client
+            .post(format!("{}/exchange", HYPERLIQUID_API_URL))
             .header("Content-Type", "application/json")
             .body(payload)
             .send()
@@ -245,7 +285,10 @@ impl Exchange for Hyperliquid {
             Ok(())
         } else {
             error!("Failed to cancel order: {}", response);
-            Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, response)))
+            Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                response,
+            )))
         }
     }
 
@@ -253,7 +296,14 @@ impl Exchange for Hyperliquid {
         info!("Fetching position for symbol: {}", symbol);
         let url = format!("{}/info", HYPERLIQUID_API_URL);
         let body = serde_json::json!({ "type": "clearinghouseState", "user": self.wallet_address });
-        let response = self.client.post(&url).json(&body).send().await?.text().await?;
+        let response = self
+            .client
+            .post(&url)
+            .json(&body)
+            .send()
+            .await?
+            .text()
+            .await?;
         let state: serde_json::Value = serde_json::from_str(&response)?;
 
         if let Some(asset_positions) = state["assetPositions"].as_array() {
@@ -265,7 +315,10 @@ impl Exchange for Hyperliquid {
                             let size_str = position_info["szi"].as_str().unwrap_or("0");
                             let price_str = position_info["entryPx"].as_str().unwrap_or("0");
                             if price_str.is_empty() {
-                                return Ok(Position { size: 0.0, price: 0.0 });
+                                return Ok(Position {
+                                    size: 0.0,
+                                    price: 0.0,
+                                });
                             }
                             let size = size_str.parse::<f64>()?;
                             let price = price_str.parse::<f64>()?;
@@ -276,33 +329,46 @@ impl Exchange for Hyperliquid {
             }
         }
 
-        Ok(Position { size: 0.0, price: 0.0 })
+        Ok(Position {
+            size: 0.0,
+            price: 0.0,
+        })
     }
     async fn fetch_exchange_params(&self, symbol: &str) -> Result<ExchangeParams, SendSyncError> {
         info!("Fetching exchange params for symbol: {}", symbol);
         let url = format!("{}/info", HYPERLIQUID_API_URL);
         let body = serde_json::json!({ "type": "meta" });
-        let response = self.client.post(&url).json(&body).send().await?.text().await?;
+        let response = self
+            .client
+            .post(&url)
+            .json(&body)
+            .send()
+            .await?
+            .text()
+            .await?;
         let meta: serde_json::Value = serde_json::from_str(&response)?;
-        
+
         if let Some(universe) = meta["universe"].as_array() {
             let coin = symbol.replace("/USDC:USDC", "");
             for market_data in universe {
                 if let Some(name) = market_data["name"].as_str() {
                     if name == coin {
                         return Ok(ExchangeParams {
-                            qty_step: 0.0, // Not available
+                            qty_step: 0.0,   // Not available
                             price_step: 0.0, // Not available
-                            min_qty: 0.0, // Not available
-                            min_cost: 10.1, // From python implementation
-                            c_mult: 1.0, // Not available
-                            inverse: false, // Hyperliquid is not inverse
+                            min_qty: 0.0,    // Not available
+                            min_cost: 10.1,  // From python implementation
+                            c_mult: 1.0,     // Not available
+                            inverse: false,  // Hyperliquid is not inverse
                         });
                     }
                 }
             }
         }
 
-        Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, format!("Could not find market info for {}", symbol))))
+        Err(Box::new(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            format!("Could not find market info for {}", symbol),
+        )))
     }
 }

@@ -6,10 +6,7 @@ use crate::exchange::SendSyncError;
 use chrono::{NaiveDateTime, Utc};
 
 pub async fn prepare_hlcvs(
-    _config: &BotConfig,
-    _exchange_config: &LiveConfig,
-    symbol: &str,
-    start_date: Option<&str>,
+    _config: &BotConfig, _exchange_config: &LiveConfig, symbol: &str, start_date: Option<&str>,
     end_date: Option<&str>,
 ) -> Result<Array2<f64>, SendSyncError> {
     info!("Preparing HLCV data for {} from local file...", symbol);
@@ -28,7 +25,9 @@ pub async fn prepare_hlcvs(
     let mut hlcvs = Vec::new();
     for result in rdr.records() {
         let record = result.map_err(|e| Box::new(e) as SendSyncError)?;
-        let timestamp: u64 = record[0].parse().map_err(|e| Box::new(e) as SendSyncError)?;
+        let timestamp: u64 = record[0]
+            .parse()
+            .map_err(|e| Box::new(e) as SendSyncError)?;
 
         if let Some(start) = start_ts {
             if timestamp < start {
@@ -42,11 +41,21 @@ pub async fn prepare_hlcvs(
         }
 
         hlcvs.push([
-            record[2].parse().map_err(|e| Box::new(e) as SendSyncError)?, // high
-            record[3].parse().map_err(|e| Box::new(e) as SendSyncError)?, // low
-            record[4].parse().map_err(|e| Box::new(e) as SendSyncError)?, // close
-            record[5].parse().map_err(|e| Box::new(e) as SendSyncError)?, // volume
-            record[4].parse().map_err(|e| Box::new(e) as SendSyncError)?, // close (again, for the 5th column)
+            record[2]
+                .parse()
+                .map_err(|e| Box::new(e) as SendSyncError)?, // high
+            record[3]
+                .parse()
+                .map_err(|e| Box::new(e) as SendSyncError)?, // low
+            record[4]
+                .parse()
+                .map_err(|e| Box::new(e) as SendSyncError)?, // close
+            record[5]
+                .parse()
+                .map_err(|e| Box::new(e) as SendSyncError)?, // volume
+            record[4]
+                .parse()
+                .map_err(|e| Box::new(e) as SendSyncError)?, // close (again, for the 5th column)
         ]);
     }
 
@@ -57,7 +66,8 @@ pub async fn prepare_hlcvs(
         )));
     }
 
-    let hlcvs = Array2::from_shape_vec((hlcvs.len(), 5), hlcvs.into_iter().flatten().collect()).map_err(|e| Box::new(e) as SendSyncError)?;
+    let hlcvs = Array2::from_shape_vec((hlcvs.len(), 5), hlcvs.into_iter().flatten().collect())
+        .map_err(|e| Box::new(e) as SendSyncError)?;
 
     Ok(hlcvs)
 }

@@ -29,11 +29,8 @@ use std::cmp::Ordering;
 /// The calculated quantity that best matches the target wallet exposure.
 /// Returns 0.0 if the current wallet exposure is already near or above the limit.
 pub fn find_entry_qty_bringing_wallet_exposure_to_target(
-    exchange_params: &ExchangeParams,
-    bot_params: &BotSideConfig,
-    state_params: &StateParams,
-    position: &Position,
-    entry_price: f64,
+    exchange_params: &ExchangeParams, bot_params: &BotSideConfig, state_params: &StateParams,
+    position: &Position, entry_price: f64,
 ) -> f64 {
     let wallet_exposure = calc_wallet_exposure(
         exchange_params.c_mult,
@@ -52,7 +49,8 @@ pub fn find_entry_qty_bringing_wallet_exposure_to_target(
     let mut evals = vec![];
 
     guesses.push(round_(
-        position.size.abs() * bot_params.total_wallet_exposure_limit / f64::max(0.01, wallet_exposure),
+        position.size.abs() * bot_params.total_wallet_exposure_limit
+            / f64::max(0.01, wallet_exposure),
         exchange_params.qty_step,
     ));
     vals.push(calc_wallet_exposure_if_filled(
@@ -164,9 +162,7 @@ pub fn find_entry_qty_bringing_wallet_exposure_to_target(
 ///
 /// A `GridOrder` struct representing the calculated auto-unstuck entry order.
 pub fn calc_auto_unstuck_entry_long(
-    exchange_params: &ExchangeParams,
-    bot_params: &BotSideConfig,
-    state_params: &StateParams,
+    exchange_params: &ExchangeParams, bot_params: &BotSideConfig, state_params: &StateParams,
     position: &Position,
 ) -> GridOrder {
     let auto_unstuck_entry_price = f64::min(
@@ -211,9 +207,7 @@ pub fn calc_auto_unstuck_entry_long(
 ///
 /// A `GridOrder` struct representing the calculated auto-unstuck entry order.
 pub fn calc_auto_unstuck_entry_short(
-    exchange_params: &ExchangeParams,
-    bot_params: &BotSideConfig,
-    state_params: &StateParams,
+    exchange_params: &ExchangeParams, bot_params: &BotSideConfig, state_params: &StateParams,
     position: &Position,
 ) -> GridOrder {
     let auto_unstuck_entry_price = f64::max(
@@ -258,10 +252,7 @@ pub fn calc_auto_unstuck_entry_short(
 ///
 /// The calculated quantity for the initial entry order.
 pub fn calc_initial_entry_qty(
-    exchange_params: &ExchangeParams,
-    bot_params: &BotSideConfig,
-    balance: f64,
-    entry_price: f64,
+    exchange_params: &ExchangeParams, bot_params: &BotSideConfig, balance: f64, entry_price: f64,
 ) -> f64 {
     f64::max(
         calc_min_entry_qty(entry_price, &exchange_params),
@@ -328,13 +319,8 @@ pub fn calc_min_entry_qty(entry_price: f64, exchange_params: &ExchangeParams) ->
 /// * `(f64)`: The projected wallet exposure if the order is filled.
 /// * `(f64)`: The (potentially cropped) reentry quantity.
 pub fn calc_cropped_reentry_qty(
-    exchange_params: &ExchangeParams,
-    bot_params: &BotSideConfig,
-    position: &Position,
-    wallet_exposure: f64,
-    balance: f64,
-    entry_qty: f64,
-    entry_price: f64,
+    exchange_params: &ExchangeParams, bot_params: &BotSideConfig, position: &Position,
+    wallet_exposure: f64, balance: f64, entry_qty: f64, entry_price: f64,
 ) -> (f64, f64) {
     let position_size_abs = position.size.abs();
     let entry_qty_abs = entry_qty.abs();
@@ -392,10 +378,7 @@ pub fn calc_cropped_reentry_qty(
 ///
 /// The calculated quantity for the reentry order.
 pub fn calc_reentry_qty(
-    entry_price: f64,
-    balance: f64,
-    position_size: f64,
-    exchange_params: &ExchangeParams,
+    entry_price: f64, balance: f64, position_size: f64, exchange_params: &ExchangeParams,
     bot_params: &BotSideConfig,
 ) -> f64 {
     f64::max(
@@ -403,8 +386,12 @@ pub fn calc_reentry_qty(
         round_(
             f64::max(
                 position_size.abs() * bot_params.entry_grid_double_down_factor,
-                cost_to_qty(balance, entry_price, exchange_params.inverse, exchange_params.c_mult)
-                    * bot_params.total_wallet_exposure_limit
+                cost_to_qty(
+                    balance,
+                    entry_price,
+                    exchange_params.inverse,
+                    exchange_params.c_mult,
+                ) * bot_params.total_wallet_exposure_limit
                     * bot_params.entry_initial_qty_pct,
             ),
             exchange_params.qty_step,
@@ -432,14 +419,11 @@ pub fn calc_reentry_qty(
 ///
 /// The calculated reentry price for the bid side.
 fn calc_reentry_price_bid(
-    position_price: f64,
-    wallet_exposure: f64,
-    order_book_bid: f64,
-    exchange_params: &ExchangeParams,
-    bot_params: &BotSideConfig,
+    position_price: f64, wallet_exposure: f64, order_book_bid: f64,
+    exchange_params: &ExchangeParams, bot_params: &BotSideConfig,
 ) -> f64 {
-    let multiplier =
-        (wallet_exposure / bot_params.total_wallet_exposure_limit) * bot_params.entry_grid_spacing_weight;
+    let multiplier = (wallet_exposure / bot_params.total_wallet_exposure_limit)
+        * bot_params.entry_grid_spacing_weight;
     let reentry_price = f64::min(
         round_dn(
             position_price * (1.0 - bot_params.entry_grid_spacing_pct * (1.0 + multiplier)),
@@ -472,14 +456,11 @@ fn calc_reentry_price_bid(
 ///
 /// The calculated reentry price for the ask side.
 fn calc_reentry_price_ask(
-    position_price: f64,
-    wallet_exposure: f64,
-    order_book_ask: f64,
-    exchange_params: &ExchangeParams,
-    bot_params: &BotSideConfig,
+    position_price: f64, wallet_exposure: f64, order_book_ask: f64,
+    exchange_params: &ExchangeParams, bot_params: &BotSideConfig,
 ) -> f64 {
-    let multiplier =
-        (wallet_exposure / bot_params.total_wallet_exposure_limit) * bot_params.entry_grid_spacing_weight;
+    let multiplier = (wallet_exposure / bot_params.total_wallet_exposure_limit)
+        * bot_params.entry_grid_spacing_weight;
     let reentry_price = f64::max(
         round_up(
             position_price * (1.0 + bot_params.entry_grid_spacing_pct * (1.0 + multiplier)),
@@ -517,9 +498,7 @@ fn calc_reentry_price_ask(
 /// A `GridOrder` struct representing the calculated grid entry. Returns a default
 /// `GridOrder` (qty=0) if no entry should be placed.
 pub fn calc_grid_entry_long(
-    exchange_params: &ExchangeParams,
-    state_params: &StateParams,
-    bot_params: &BotSideConfig,
+    exchange_params: &ExchangeParams, state_params: &StateParams, bot_params: &BotSideConfig,
     position: &Position,
 ) -> GridOrder {
     if bot_params.total_wallet_exposure_limit == 0.0 || state_params.balance <= 0.0 {
@@ -684,11 +663,8 @@ pub fn calc_grid_entry_long(
 ///
 /// The `GridOrder` determined by either the grid or trailing logic.
 pub fn calc_next_entry_long(
-    exchange_params: &ExchangeParams,
-    state_params: &StateParams,
-    bot_params: &BotSideConfig,
-    position: &Position,
-    trailing_price_bundle: &TrailingPriceBundle,
+    exchange_params: &ExchangeParams, state_params: &StateParams, bot_params: &BotSideConfig,
+    position: &Position, trailing_price_bundle: &TrailingPriceBundle,
 ) -> GridOrder {
     // determines whether trailing or grid order, returns GridOrder
     if bot_params.total_wallet_exposure_limit == 0.0 || state_params.balance <= 0.0 {
@@ -730,8 +706,10 @@ pub fn calc_next_entry_long(
                 )
             } else {
                 let mut bot_params_modified = bot_params.clone();
-                bot_params_modified.total_wallet_exposure_limit =
-                    bot_params.total_wallet_exposure_limit * bot_params.entry_trailing_grid_ratio * 1.01;
+                bot_params_modified.total_wallet_exposure_limit = bot_params
+                    .total_wallet_exposure_limit
+                    * bot_params.entry_trailing_grid_ratio
+                    * 1.01;
                 calc_trailing_entry_long(
                     &exchange_params,
                     &state_params,
@@ -753,7 +731,8 @@ pub fn calc_next_entry_long(
             } else {
                 let mut bot_params_modified = bot_params.clone();
                 if wallet_exposure != 0.0 {
-                    bot_params_modified.total_wallet_exposure_limit = bot_params.total_wallet_exposure_limit
+                    bot_params_modified.total_wallet_exposure_limit = bot_params
+                        .total_wallet_exposure_limit
                         * (1.0 + bot_params.entry_trailing_grid_ratio)
                         * 1.01;
                 }
@@ -797,11 +776,8 @@ pub fn calc_next_entry_long(
 /// A `GridOrder` struct for the trailing entry. Returns a default `GridOrder` (qty=0)
 /// if trailing conditions are not met.
 pub fn calc_trailing_entry_long(
-    exchange_params: &ExchangeParams,
-    state_params: &StateParams,
-    bot_params: &BotSideConfig,
-    position: &Position,
-    trailing_price_bundle: &TrailingPriceBundle,
+    exchange_params: &ExchangeParams, state_params: &StateParams, bot_params: &BotSideConfig,
+    position: &Position, trailing_price_bundle: &TrailingPriceBundle,
 ) -> GridOrder {
     let initial_entry_price = calc_ema_price_bid(
         exchange_params.price_step,
@@ -949,9 +925,7 @@ pub fn calc_trailing_entry_long(
 /// A `GridOrder` struct representing the calculated grid entry. Returns a default
 /// `GridOrder` (qty=0) if no entry should be placed.
 pub fn calc_grid_entry_short(
-    exchange_params: &ExchangeParams,
-    state_params: &StateParams,
-    bot_params: &BotSideConfig,
+    exchange_params: &ExchangeParams, state_params: &StateParams, bot_params: &BotSideConfig,
     position: &Position,
 ) -> GridOrder {
     if bot_params.total_wallet_exposure_limit == 0.0 || state_params.balance <= 0.0 {
@@ -1118,11 +1092,8 @@ pub fn calc_grid_entry_short(
 /// A `GridOrder` struct for the trailing entry. Returns a default `GridOrder` (qty=0)
 /// if trailing conditions are not met.
 pub fn calc_trailing_entry_short(
-    exchange_params: &ExchangeParams,
-    state_params: &StateParams,
-    bot_params: &BotSideConfig,
-    position: &Position,
-    trailing_price_bundle: &TrailingPriceBundle,
+    exchange_params: &ExchangeParams, state_params: &StateParams, bot_params: &BotSideConfig,
+    position: &Position, trailing_price_bundle: &TrailingPriceBundle,
 ) -> GridOrder {
     let initial_entry_price = calc_ema_price_ask(
         exchange_params.price_step,
@@ -1274,11 +1245,8 @@ pub fn calc_trailing_entry_short(
 ///
 /// The `GridOrder` determined by either the grid or trailing logic.
 pub fn calc_next_entry_short(
-    exchange_params: &ExchangeParams,
-    state_params: &StateParams,
-    bot_params: &BotSideConfig,
-    position: &Position,
-    trailing_price_bundle: &TrailingPriceBundle,
+    exchange_params: &ExchangeParams, state_params: &StateParams, bot_params: &BotSideConfig,
+    position: &Position, trailing_price_bundle: &TrailingPriceBundle,
 ) -> GridOrder {
     // determines whether trailing or grid order, returns GridOrder
     if bot_params.total_wallet_exposure_limit == 0.0 || state_params.balance <= 0.0 {
@@ -1320,8 +1288,10 @@ pub fn calc_next_entry_short(
             } else {
                 // return trailing order, but crop to max bot_params.total_wallet_exposure_limit * bot_params.entry_trailing_grid_ratio + 1%
                 let mut bot_params_modified = bot_params.clone();
-                bot_params_modified.total_wallet_exposure_limit =
-                    bot_params.total_wallet_exposure_limit * bot_params.entry_trailing_grid_ratio * 1.01;
+                bot_params_modified.total_wallet_exposure_limit = bot_params
+                    .total_wallet_exposure_limit
+                    * bot_params.entry_trailing_grid_ratio
+                    * 1.01;
                 calc_trailing_entry_short(
                     &exchange_params,
                     &state_params,
@@ -1343,7 +1313,8 @@ pub fn calc_next_entry_short(
             } else {
                 let mut bot_params_modified = bot_params.clone();
                 if wallet_exposure != 0.0 {
-                    bot_params_modified.total_wallet_exposure_limit = bot_params.total_wallet_exposure_limit
+                    bot_params_modified.total_wallet_exposure_limit = bot_params
+                        .total_wallet_exposure_limit
                         * (1.0 + bot_params.entry_trailing_grid_ratio)
                         * 1.01;
                 }
@@ -1388,11 +1359,8 @@ pub fn calc_next_entry_short(
 ///
 /// A `Vec<GridOrder>` containing the calculated grid of entry orders.
 pub fn calc_entries_long(
-    exchange_params: &ExchangeParams,
-    state_params: &StateParams,
-    bot_params: &BotSideConfig,
-    position: &Position,
-    trailing_price_bundle: &TrailingPriceBundle,
+    exchange_params: &ExchangeParams, state_params: &StateParams, bot_params: &BotSideConfig,
+    position: &Position, trailing_price_bundle: &TrailingPriceBundle,
 ) -> Vec<GridOrder> {
     let mut entries = Vec::<GridOrder>::new();
 
@@ -1483,11 +1451,8 @@ pub fn calc_entries_long(
 ///
 /// A `Vec<GridOrder>` containing the calculated grid of entry orders.
 pub fn calc_entries_short(
-    exchange_params: &ExchangeParams,
-    state_params: &StateParams,
-    bot_params: &BotSideConfig,
-    position: &Position,
-    trailing_price_bundle: &TrailingPriceBundle,
+    exchange_params: &ExchangeParams, state_params: &StateParams, bot_params: &BotSideConfig,
+    position: &Position, trailing_price_bundle: &TrailingPriceBundle,
 ) -> Vec<GridOrder> {
     let mut entries = Vec::<GridOrder>::new();
 
@@ -1562,9 +1527,18 @@ pub fn calc_entries_short(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::{BotSideConfig, EMABands, ExchangeParams, OrderBook, Position, StateParams, TrailingPriceBundle};
+    use crate::types::{
+        BotSideConfig, EMABands, ExchangeParams, OrderBook, Position, StateParams,
+        TrailingPriceBundle,
+    };
 
-    fn setup_test_params() -> (ExchangeParams, StateParams, BotSideConfig, Position, TrailingPriceBundle) {
+    fn setup_test_params() -> (
+        ExchangeParams,
+        StateParams,
+        BotSideConfig,
+        Position,
+        TrailingPriceBundle,
+    ) {
         let exchange_params = ExchangeParams {
             qty_step: 0.001,
             price_step: 0.01,
@@ -1598,16 +1572,23 @@ mod tests {
             entry_trailing_retracement_pct: 0.005,
             unstuck_threshold: 0.1,
             unstuck_ema_dist: 0.01,
-            ..Default::default()        };
+            ..Default::default()
+        };
 
         let position = Position {
             size: 1.0,
             price: 100.0,
         };
-        
+
         let trailing_bundle = TrailingPriceBundle::default();
 
-        (exchange_params, state_params, bot_params, position, trailing_bundle)
+        (
+            exchange_params,
+            state_params,
+            bot_params,
+            position,
+            trailing_bundle,
+        )
     }
 
     #[test]
@@ -1622,7 +1603,12 @@ mod tests {
     fn test_calc_initial_entry_qty() {
         let (exchange_params, state_params, bot_params, _, _) = setup_test_params();
         let entry_price = 100.0;
-        let initial_qty = calc_initial_entry_qty(&exchange_params, &bot_params, state_params.balance, entry_price);
+        let initial_qty = calc_initial_entry_qty(
+            &exchange_params,
+            &bot_params,
+            state_params.balance,
+            entry_price,
+        );
         // balance * total_wallet_exposure_limit * entry_initial_qty_pct = 1000 * 10 * 0.01 = 100
         // cost_to_qty(100, 100.0, false, 1.0) = 1.0
         // round_(1.0, 0.001) = 1.0
@@ -1717,12 +1703,18 @@ mod tests {
         // position size is 1.0, price is 100.0
         // balance is 1000.0
         // total_wallet_exposure_limit is 10.0
-        let wallet_exposure = calc_wallet_exposure(exchange_params.c_mult, state_params.balance, position.size, position.price, exchange_params.inverse);
+        let wallet_exposure = calc_wallet_exposure(
+            exchange_params.c_mult,
+            state_params.balance,
+            position.size,
+            position.price,
+            exchange_params.inverse,
+        );
         let balance = state_params.balance;
         let entry_qty = 120.0;
         let entry_price = 90.0;
         // wallet_exposure_if_filled becomes 10.9, which is > 10.0 * 1.01
-        
+
         let (_, cropped_qty) = calc_cropped_reentry_qty(
             &exchange_params,
             &bot_params,

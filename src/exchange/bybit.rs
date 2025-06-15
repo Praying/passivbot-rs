@@ -180,7 +180,10 @@ impl Exchange for Bybit {
 
     async fn load_markets(&self) -> Result<HashMap<String, Market>, SendSyncError> {
         info!("Loading markets");
-        let url = format!("{}/v5/market/instruments-info?category=linear", BYBIT_API_URL);
+        let url = format!(
+            "{}/v5/market/instruments-info?category=linear",
+            BYBIT_API_URL
+        );
         let response = self.client.get(&url).send().await?.text().await?;
         let bybit_response: BybitResponse<BybitMarketResult> = serde_json::from_str(&response)?;
 
@@ -215,8 +218,7 @@ impl Exchange for Bybit {
     }
 
     async fn fetch_tickers(
-        &self,
-        symbols: &[String],
+        &self, symbols: &[String],
     ) -> Result<HashMap<String, Ticker>, SendSyncError> {
         info!("Fetching tickers for symbols: {:?}", symbols);
         let url = format!(
@@ -277,7 +279,10 @@ impl Exchange for Bybit {
 
     async fn fetch_order_book(&self, symbol: &str) -> Result<OrderBook, SendSyncError> {
         info!("Fetching order book for symbol: {}", symbol);
-        let url = format!("{}/v5/market/orderbook?category=linear&symbol={}", BYBIT_API_URL, symbol);
+        let url = format!(
+            "{}/v5/market/orderbook?category=linear&symbol={}",
+            BYBIT_API_URL, symbol
+        );
         let response = self.client.get(&url).send().await?.text().await?;
         let bybit_response: BybitResponse<BybitOrderBookResult> = serde_json::from_str(&response)?;
 
@@ -290,13 +295,11 @@ impl Exchange for Bybit {
             .result
             .b
             .into_iter()
-            .filter_map(|e| {
-                match (e.0.parse::<f64>(), e.1.parse::<f64>()) {
-                    (Ok(price), Ok(qty)) => Some([price, qty]),
-                    _ => {
-                        warn!("Could not parse order book entry: {:?}", e);
-                        None
-                    }
+            .filter_map(|e| match (e.0.parse::<f64>(), e.1.parse::<f64>()) {
+                (Ok(price), Ok(qty)) => Some([price, qty]),
+                _ => {
+                    warn!("Could not parse order book entry: {:?}", e);
+                    None
                 }
             })
             .collect();
@@ -304,22 +307,16 @@ impl Exchange for Bybit {
             .result
             .a
             .into_iter()
-            .filter_map(|e| {
-                match (e.0.parse::<f64>(), e.1.parse::<f64>()) {
-                    (Ok(price), Ok(qty)) => Some([price, qty]),
-                    _ => {
-                        warn!("Could not parse order book entry: {:?}", e);
-                        None
-                    }
+            .filter_map(|e| match (e.0.parse::<f64>(), e.1.parse::<f64>()) {
+                (Ok(price), Ok(qty)) => Some([price, qty]),
+                _ => {
+                    warn!("Could not parse order book entry: {:?}", e);
+                    None
                 }
             })
             .collect();
 
-
-        Ok(OrderBook {
-            bids,
-            asks,
-        })
+        Ok(OrderBook { bids, asks })
     }
 
     async fn fetch_balance(&self) -> Result<f64, SendSyncError> {
@@ -328,8 +325,10 @@ impl Exchange for Bybit {
         let params = format!("accountType=UNIFIED&recvWindow={}", recv_window);
         let (timestamp, signature) = self.sign_request(&params);
         let url = format!("{}/v5/account/wallet-balance?{}", BYBIT_API_URL, params);
-        
-        let response = self.client.get(&url)
+
+        let response = self
+            .client
+            .get(&url)
             .header("X-BAPI-API-KEY", &self.api_key)
             .header("X-BAPI-TIMESTAMP", timestamp)
             .header("X-BAPI-SIGN", signature)
@@ -368,7 +367,9 @@ impl Exchange for Bybit {
         let payload = serde_json::to_string(&order_request)?;
         let (timestamp, recv_window, signature) = self.sign_post_request(&payload);
 
-        let response = self.client.post(format!("{}/v5/order/create", BYBIT_API_URL))
+        let response = self
+            .client
+            .post(format!("{}/v5/order/create", BYBIT_API_URL))
             .header("X-BAPI-API-KEY", &self.api_key)
             .header("X-BAPI-TIMESTAMP", timestamp)
             .header("X-BAPI-RECV-WINDOW", recv_window)
@@ -383,7 +384,10 @@ impl Exchange for Bybit {
         let bybit_response: BybitResponse<serde_json::Value> = serde_json::from_str(&response)?;
 
         if bybit_response.ret_code != 0 {
-            error!("Failed to place order: {}. Response: {}", bybit_response.ret_msg, response);
+            error!(
+                "Failed to place order: {}. Response: {}",
+                bybit_response.ret_msg, response
+            );
             return Err(bybit_response.ret_msg.into());
         }
 
@@ -401,7 +405,9 @@ impl Exchange for Bybit {
         let payload = serde_json::to_string(&cancel_request)?;
         let (timestamp, recv_window, signature) = self.sign_post_request(&payload);
 
-        let response = self.client.post(format!("{}/v5/order/cancel", BYBIT_API_URL))
+        let response = self
+            .client
+            .post(format!("{}/v5/order/cancel", BYBIT_API_URL))
             .header("X-BAPI-API-KEY", &self.api_key)
             .header("X-BAPI-TIMESTAMP", timestamp)
             .header("X-BAPI-RECV-WINDOW", recv_window)
@@ -429,7 +435,9 @@ impl Exchange for Bybit {
         let (timestamp, signature) = self.sign_request(&params);
         let url = format!("{}/v5/position/list?{}", BYBIT_API_URL, params);
 
-        let response = self.client.get(&url)
+        let response = self
+            .client
+            .get(&url)
             .header("X-BAPI-API-KEY", &self.api_key)
             .header("X-BAPI-TIMESTAMP", timestamp)
             .header("X-BAPI-SIGN", signature)
@@ -461,14 +469,16 @@ impl Exchange for Bybit {
         info!("Fetching exchange params for symbol: {}", symbol);
         let url = format!(
             "{}/v5/market/instruments-info?category=linear&symbol={}",
-            BYBIT_API_URL,
-            symbol
+            BYBIT_API_URL, symbol
         );
         let response = self.client.get(&url).send().await?.text().await?;
         let bybit_response: BybitResponse<BybitMarketResult> = serde_json::from_str(&response)?;
 
         if bybit_response.ret_code != 0 {
-            error!("Failed to fetch exchange params: {}", bybit_response.ret_msg);
+            error!(
+                "Failed to fetch exchange params: {}",
+                bybit_response.ret_msg
+            );
             return Err(bybit_response.ret_msg.into());
         }
 
@@ -478,7 +488,7 @@ impl Exchange for Bybit {
                 price_step: market.price_filter.tick_size.parse()?,
                 min_qty: market.lot_size_filter.min_order_qty.parse()?,
                 min_cost: 0.0, // Not provided by bybit
-                c_mult: 1.0, // Not provided by bybit
+                c_mult: 1.0,   // Not provided by bybit
                 inverse: market.contract_type != "LinearPerpetual",
             })
         } else {

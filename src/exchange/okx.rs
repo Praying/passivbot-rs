@@ -91,7 +91,6 @@ struct OkxOrderResponse {
     data: Vec<OkxOrderResponseData>,
 }
 
-
 pub struct Okx {
     pub client: reqwest::Client,
     user_config: UserConfig,
@@ -114,10 +113,12 @@ impl Okx {
         }
     }
 
-    fn create_auth_headers(&self, method: &str, request_path: &str, body: &str) -> Result<reqwest::header::HeaderMap, SendSyncError> {
+    fn create_auth_headers(
+        &self, method: &str, request_path: &str, body: &str,
+    ) -> Result<reqwest::header::HeaderMap, SendSyncError> {
         let timestamp = Utc::now().format("%Y-%m-%dT%H:%M:%S%.3fZ").to_string();
         let message = format!("{}{}{}{}", timestamp, method, request_path, body);
-        
+
         type HmacSha256 = Hmac<Sha256>;
         let mut mac = HmacSha256::new_from_slice(self.user_config.secret.as_bytes())?;
         mac.update(message.as_bytes());
@@ -163,12 +164,17 @@ impl Exchange for Okx {
         Ok(markets)
     }
 
-    async fn fetch_tickers(&self, _symbols: &[String]) -> Result<HashMap<String, Ticker>, SendSyncError> {
+    async fn fetch_tickers(
+        &self, _symbols: &[String],
+    ) -> Result<HashMap<String, Ticker>, SendSyncError> {
         unimplemented!()
     }
 
     async fn fetch_ticker(&self, symbol: &str) -> Result<f64, SendSyncError> {
-        let url = format!("https://www.okx.com/api/v5/market/ticker?instId={}-SWAP", symbol);
+        let url = format!(
+            "https://www.okx.com/api/v5/market/ticker?instId={}-SWAP",
+            symbol
+        );
         let response = self.client.get(&url).send().await?.text().await?;
         let parsed: OkxTickerResponse = serde_json::from_str(&response)?;
 
@@ -185,11 +191,19 @@ impl Exchange for Okx {
         let headers = self.create_auth_headers("GET", request_path, "")?;
         let url = format!("https://www.okx.com{}", request_path);
 
-        let response = self.client.get(&url).headers(headers).send().await?.text().await?;
+        let response = self
+            .client
+            .get(&url)
+            .headers(headers)
+            .send()
+            .await?
+            .text()
+            .await?;
         let parsed: OkxBalanceResponse = serde_json::from_str(&response)?;
 
         let balance_data = parsed.data.first().ok_or("No balance data found")?;
-        let usdt_balance = balance_data.details
+        let usdt_balance = balance_data
+            .details
             .iter()
             .find(|d| d.ccy == "USDT")
             .ok_or("USDT balance not found")?;
@@ -200,7 +214,7 @@ impl Exchange for Okx {
     async fn place_order(&mut self, order: &Order) -> Result<(), SendSyncError> {
         let request_path = "/api/v5/trade/order";
         let inst_id = format!("{}-SWAP", order.symbol);
-        
+
         let order_req = OkxOrderRequest {
             inst_id: &inst_id,
             td_mode: "cross",
@@ -215,12 +229,24 @@ impl Exchange for Okx {
         let headers = self.create_auth_headers("POST", request_path, &body)?;
         let url = format!("https://www.okx.com{}", request_path);
 
-        let response = self.client.post(&url).headers(headers).body(body).send().await?.text().await?;
+        let response = self
+            .client
+            .post(&url)
+            .headers(headers)
+            .body(body)
+            .send()
+            .await?
+            .text()
+            .await?;
         let parsed: OkxOrderResponse = serde_json::from_str(&response)?;
 
         let order_response = parsed.data.first().ok_or("No order response data")?;
         if order_response.s_code != "0" {
-            return Err(format!("Order placement failed with code {}: {}", order_response.s_code, response).into());
+            return Err(format!(
+                "Order placement failed with code {}: {}",
+                order_response.s_code, response
+            )
+            .into());
         }
 
         Ok(())
@@ -235,10 +261,13 @@ impl Exchange for Okx {
     }
 
     async fn fetch_exchange_params(&self, symbol: &str) -> Result<ExchangeParams, SendSyncError> {
-        let url = format!("https://www.okx.com/api/v5/public/instruments?instType=SWAP&instId={}-SWAP", symbol);
+        let url = format!(
+            "https://www.okx.com/api/v5/public/instruments?instType=SWAP&instId={}-SWAP",
+            symbol
+        );
         let response = self.client.get(&url).send().await?.text().await?;
         let parsed: OkxMarketsResponse = serde_json::from_str(&response)?;
-        
+
         let market = parsed.data.first().ok_or("Market not found")?;
 
         Ok(ExchangeParams {

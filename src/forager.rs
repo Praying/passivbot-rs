@@ -1,4 +1,3 @@
-
 use log::info;
 
 use crate::manager::Manager;
@@ -23,10 +22,20 @@ impl Forager {
 
     pub async fn run(&self) -> Vec<String> {
         info!("Forager is running");
-        
-        let markets = self.manager.exchange.load_markets().await.unwrap_or_default();
+
+        let markets = self
+            .manager
+            .exchange
+            .load_markets()
+            .await
+            .unwrap_or_default();
         let symbols: Vec<String> = markets.keys().cloned().collect();
-        let tickers = self.manager.exchange.fetch_tickers(&symbols).await.unwrap_or_default();
+        let tickers = self
+            .manager
+            .exchange
+            .fetch_tickers(&symbols)
+            .await
+            .unwrap_or_default();
 
         let approved_coins = &self.manager.config.live.approved_coins;
         let ignored_coins = &self.manager.config.live.ignored_coins;
@@ -47,9 +56,12 @@ impl Forager {
             })
             .filter_map(|(symbol, market)| {
                 if let Some(ticker) = tickers.get(symbol) {
-                    if let Some(created_at) = DateTime::from_timestamp(market.created_at / 1000, 0) {
+                    if let Some(created_at) = DateTime::from_timestamp(market.created_at / 1000, 0)
+                    {
                         let age = now - created_at;
-                        if ticker.quote_volume >= min_vol && age >= chrono::Duration::days(min_age_days as i64) {
+                        if ticker.quote_volume >= min_vol
+                            && age >= chrono::Duration::days(min_age_days as i64)
+                        {
                             return Some(symbol.clone());
                         }
                     }
@@ -59,7 +71,7 @@ impl Forager {
             .collect();
 
         // TODO: implement scoring logic
-        
+
         eligible_symbols
     }
 }
