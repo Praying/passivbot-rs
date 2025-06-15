@@ -129,6 +129,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "arbitrary"
+version = "1.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dde20b3d026af13f561bdd0f15edf01fc734f0dafcedbaf42bba506a9517f223"
+dependencies = [
+ "derive_arbitrary",
+]
+
+[[package]]
 name = "async-trait"
 version = "0.1.88"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -452,6 +461,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9c9e6a11ca8224451684bc0d7d5a7adbf8f2fd6887261a1cfc3c0432f9d4068e"
 dependencies = [
  "powerfmt",
+]
+
+[[package]]
+name = "derive_arbitrary"
+version = "1.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "30542c1ad912e0e3d22a1935c290e12e8a29d704a420177a31faad4a601a0800"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.101",
 ]
 
 [[package]]
@@ -1175,17 +1195,32 @@ dependencies = [
 ]
 
 [[package]]
-name = "ndarray-npy"
-version = "0.8.1"
+name = "ndarray"
+version = "0.16.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f85776816e34becd8bd9540818d7dc77bf28307f3b3dcc51cc82403c6931680c"
+checksum = "882ed72dce9365842bf196bdeedf5055305f11fc8c03dee7bb0194a6cad34841"
+dependencies = [
+ "matrixmultiply",
+ "num-complex",
+ "num-integer",
+ "num-traits",
+ "portable-atomic",
+ "portable-atomic-util",
+ "rawpointer",
+]
+
+[[package]]
+name = "ndarray-npy"
+version = "0.9.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7b313788c468c49141a9d9b6131fc15f403e6ef4e8446a0b2e18f664ddb278a9"
 dependencies = [
  "byteorder",
- "ndarray",
+ "ndarray 0.16.1",
  "num-complex",
  "num-traits",
  "py_literal",
- "zip 0.5.13",
+ "zip 2.4.2",
 ]
 
 [[package]]
@@ -1382,7 +1417,7 @@ dependencies = [
  "hex",
  "hmac",
  "log",
- "ndarray",
+ "ndarray 0.15.6",
  "ndarray-npy",
  "rand",
  "rayon",
@@ -1503,6 +1538,21 @@ name = "pkg-config"
 version = "0.3.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7edddbd0b52d732b21ad9a5fab5c704c14cd949e5e9a1ec5929a24fded1b904c"
+
+[[package]]
+name = "portable-atomic"
+version = "1.11.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f84267b20a16ea918e43c6a88433c2d54fa145c92a811b5b047ccbe153674483"
+
+[[package]]
+name = "portable-atomic-util"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d8a2f0d8d040d7848a709caf78912debcc3f33ee4b3cac47d73d1e1069e83507"
+dependencies = [
+ "portable-atomic",
+]
 
 [[package]]
 name = "potential_utf"
@@ -1943,6 +1993,12 @@ dependencies = [
  "paste",
  "wide",
 ]
+
+[[package]]
+name = "simd-adler32"
+version = "0.3.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d66dc143e6b11c1eddc06d5c423cfc97062865baf299914ab64caa38182078fe"
 
 [[package]]
 name = "slab"
@@ -2856,18 +2912,6 @@ dependencies = [
 
 [[package]]
 name = "zip"
-version = "0.5.13"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "93ab48844d61251bb3835145c521d88aa4031d7139e8485990f60ca911fa0815"
-dependencies = [
- "byteorder",
- "crc32fast",
- "flate2",
- "thiserror 1.0.69",
-]
-
-[[package]]
-name = "zip"
 version = "0.6.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "760394e246e4c28189f19d488c058bf16f564016aefac5d32bb1f3b51d5e9261"
@@ -2884,6 +2928,35 @@ dependencies = [
  "sha1",
  "time",
  "zstd",
+]
+
+[[package]]
+name = "zip"
+version = "2.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fabe6324e908f85a1c52063ce7aa26b68dcb7eb6dbc83a2d148403c9bc3eba50"
+dependencies = [
+ "arbitrary",
+ "crc32fast",
+ "crossbeam-utils",
+ "displaydoc",
+ "flate2",
+ "indexmap",
+ "memchr",
+ "thiserror 2.0.12",
+ "zopfli",
+]
+
+[[package]]
+name = "zopfli"
+version = "0.8.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "edfc5ee405f504cd4984ecc6f14d02d55cfda60fa4b689434ef4102aae150cd7"
+dependencies = [
+ "bumpalo",
+ "crc32fast",
+ "log",
+ "simd-adler32",
 ]
 
 [[package]]
