@@ -24,7 +24,7 @@ serde_urlencoded = "0.7"
 clap = { version = "4.0", features = ["derive"] }
 csv = "1.1"
 rand = "0.8"
-statrs = "0.16.0"
+statrs = "0.18.0"
 rayon = "1.8"
 base64 = "0.13"
 futures = "0.3"
